@@ -53,7 +53,6 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedVariant, setSelectedVariant] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -101,7 +100,7 @@ export default function ProductDetailPage() {
       .catch(() => {});
   }, [product]);
 
-  const variant = product?.variants[selectedVariant];
+  const variant = product?.variants[0];
 
   function getActiveTier(qty: number) {
     if (!product?.discountTiers || product.discountTiers.length === 0) return null;
@@ -370,33 +369,6 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Varyant seçimi */}
-          {product.variants.length > 1 && (
-            <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">
-                Varyant Seçin ({product.variants.length} seçenek)
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {product.variants.map((v, i) => (
-                  <button
-                    key={v.id}
-                    onClick={() => { setSelectedVariant(i); setQuantity(1); }}
-                    className={`text-xs px-3 py-2 rounded-lg border transition ${
-                      selectedVariant === i
-                        ? "border-blue-500 bg-blue-50 text-blue-700 font-medium shadow-sm"
-                        : v.inventoryQuantity <= 0
-                        ? "border-gray-200 bg-gray-50 text-gray-300"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    {v.title !== "Default Title" ? v.title : v.sku}
-                    {v.inventoryQuantity <= 0 && " (Tükendi)"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Stok bilgisi */}
           {variant && (
             <div className="flex items-center gap-4 mb-4 text-sm">
@@ -483,75 +455,6 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Tüm varyant detayları tablosu */}
-          {product.variants.length > 1 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Tüm Varyantlar</h3>
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left px-3 py-2 text-gray-500 font-medium">Varyant</th>
-                      <th className="text-left px-3 py-2 text-gray-500 font-medium">SKU</th>
-                      <th className="text-right px-3 py-2 text-gray-500 font-medium">Perakende</th>
-                      <th className="text-right px-3 py-2 text-gray-500 font-medium">Bayi</th>
-                      <th className="text-center px-3 py-2 text-gray-500 font-medium">Stok</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {product.variants.map((v, i) => {
-                      const vWholesale = v.retailPrice * (1 - effectiveDiscount / 100);
-                      return (
-                        <tr
-                          key={v.id}
-                          onClick={() => { setSelectedVariant(i); setQuantity(1); }}
-                          className={`cursor-pointer transition ${
-                            selectedVariant === i ? "bg-blue-50" : "hover:bg-gray-50"
-                          }`}
-                        >
-                          <td className="px-3 py-2 font-medium text-gray-800">
-                            {v.title !== "Default Title" ? v.title : "-"}
-                          </td>
-                          <td className="px-3 py-2 text-gray-500">{v.sku || "-"}</td>
-                          <td className="px-3 py-2 text-right text-gray-400">
-                            {formatCurrency(v.retailPrice)}
-                          </td>
-                          <td className="px-3 py-2 text-right font-semibold text-green-600">
-                            {formatCurrency(Math.round(vWholesale * 100) / 100)}
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                              v.inventoryQuantity > 0
-                                ? "bg-green-100 text-green-700"
-                                : product.isPreorder
-                                ? "bg-orange-100 text-orange-700"
-                                : "bg-red-100 text-red-600"
-                            }`}>
-                              {v.inventoryQuantity > 0 ? v.inventoryQuantity : product.isPreorder ? "Ön Sipariş" : "Tükendi"}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Etiketler */}
-          {product.tags && product.tags.length > 0 && (
-            <div className="mt-6">
-              <p className="text-xs text-gray-400 mb-1.5">Etiketler</p>
-              <div className="flex flex-wrap gap-1.5">
-                {product.tags.map((tag) => (
-                  <span key={tag} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

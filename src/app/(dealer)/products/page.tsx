@@ -443,8 +443,6 @@ export default function ProductsPage() {
             const nextTier = getNextTier(product, qty);
             const effectiveDiscount = activeTier ? activeTier.discountPercent : product.discountPercent;
             const effectiveWholesale = variant.retailPrice * (1 - effectiveDiscount / 100);
-            const hasMultipleVariants = product.variants.length > 1;
-
             return (
               <div
                 key={product.id}
@@ -537,7 +535,6 @@ export default function ProductsPage() {
                     ) : (
                       <>Stok: {variant.inventoryQuantity}</>
                     )}
-                    {hasMultipleVariants && ` · ${product.variants.length} varyant`}
                   </p>
 
                   {/* Adet + Sepete Ekle */}
