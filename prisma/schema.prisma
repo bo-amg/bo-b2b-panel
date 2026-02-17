@@ -58,6 +58,7 @@ model Order {
   currency        String      @default("TRY")
   notes           String?
   adminNotes      String?
+  hasPreorderItems Boolean @default(false)
   rejectionReason String?
   dueDate         DateTime?
   shippingMethod  String?
@@ -83,6 +84,7 @@ model OrderItem {
   wholesalePrice   Decimal @db.Decimal(10, 2)
   discountPercent  Decimal @db.Decimal(5, 2)
   lineTotal        Decimal @db.Decimal(10, 2)
+  isPreorder       Boolean @default(false)
 }
 
 model ProductCache {
@@ -97,6 +99,8 @@ model ProductCache {
   images           Json
   tags             String[]
   collections      Json?    @default("[]")
+  isPreorder       Boolean  @default(false)
+  preorderNote     String?
   syncedAt         DateTime @default(now())
   favorites        Favorite[]
 }

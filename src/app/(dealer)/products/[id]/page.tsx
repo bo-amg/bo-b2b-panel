@@ -13,6 +13,7 @@ import {
   Tag,
   Truck,
   Info,
+  Clock,
 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import Image from "next/image";
@@ -41,6 +42,8 @@ interface Product {
   discountSource: string;
   discountTiers?: Array<{ minQuantity: number; discountPercent: number }>;
   tags: string[];
+  isPreorder?: boolean;
+  preorderNote?: string | null;
 }
 
 export default function ProductDetailPage() {
@@ -131,6 +134,7 @@ export default function ProductDetailPage() {
       retailPrice: variant.retailPrice,
       wholesalePrice: Math.round(effectiveWholesale * 100) / 100,
       quantity,
+      isPreorder: product.isPreorder || false,
     });
     setAdded(true);
     setQuantity(1);
@@ -185,7 +189,7 @@ export default function ProductDetailPage() {
   }
 
   const totalStock = product.variants.reduce((s, v) => s + v.inventoryQuantity, 0);
-  const isOutOfStock = !variant || variant.inventoryQuantity <= 0;
+  const isOutOfStock = !variant || (variant.inventoryQuantity <= 0 && !product.isPreorder);
 
   return (
     <div>
@@ -232,8 +236,14 @@ export default function ProductDetailPage() {
             >
               <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} />
             </button>
-            {/* Stok yok overlay */}
-            {totalStock <= 0 && (
+            {/* Ön sipariş badge */}
+            {product.isPreorder && (
+              <div className="absolute top-3 left-3 mt-10 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-lg shadow flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" /> Ön Sipariş
+              </div>
+            )}
+            {/* Stok yok overlay - ön sipariş değilse */}
+            {totalStock <= 0 && !product.isPreorder && (
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                 <span className="bg-white text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg">
                   Tükendi
@@ -281,6 +291,19 @@ export default function ProductDetailPage() {
           <h1 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
             {product.title}
           </h1>
+
+          {/* Ön sipariş bilgi banner */}
+          {product.isPreorder && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mb-4 flex items-start gap-2.5">
+              <Clock className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-orange-800">Ön Sipariş Ürünü</p>
+                <p className="text-xs text-orange-600 mt-0.5">
+                  {product.preorderNote || "Bu ürün şu an stoklarda yok. Ön sipariş vererek ürün geldiğinde öncelikli olarak temin edebilirsiniz."}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Kategoriler */}
           {product.collections.length > 0 && (
@@ -378,12 +401,21 @@ export default function ProductDetailPage() {
           {variant && (
             <div className="flex items-center gap-4 mb-4 text-sm">
               <div className="flex items-center gap-1.5">
-                <Truck className="h-4 w-4 text-gray-400" />
-                <span className={variant.inventoryQuantity > 0 ? "text-green-600 font-medium" : "text-red-500"}>
-                  {variant.inventoryQuantity > 0
-                    ? `${variant.inventoryQuantity} adet stokta`
-                    : "Stokta yok"}
-                </span>
+                {product.isPreorder && variant.inventoryQuantity <= 0 ? (
+                  <>
+                    <Clock className="h-4 w-4 text-orange-500" />
+                    <span className="text-orange-600 font-medium">Ön sipariş ile temin edilebilir</span>
+                  </>
+                ) : (
+                  <>
+                    <Truck className="h-4 w-4 text-gray-400" />
+                    <span className={variant.inventoryQuantity > 0 ? "text-green-600 font-medium" : "text-red-500"}>
+                      {variant.inventoryQuantity > 0
+                        ? `${variant.inventoryQuantity} adet stokta`
+                        : "Stokta yok"}
+                    </span>
+                  </>
+                )}
               </div>
               {variant.sku && (
                 <span className="text-gray-400">SKU: {variant.sku}</span>
@@ -424,6 +456,8 @@ export default function ProductDetailPage() {
                   ? "bg-green-500 text-white"
                   : isOutOfStock
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : product.isPreorder && variant && variant.inventoryQuantity <= 0
+                  ? "bg-orange-500 text-white hover:bg-orange-600 active:scale-[0.98]"
                   : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]"
               }`}
             >
@@ -431,6 +465,8 @@ export default function ProductDetailPage() {
                 <><Check className="h-4 w-4" /> Sepete Eklendi!</>
               ) : isOutOfStock ? (
                 "Stokta Yok"
+              ) : product.isPreorder && variant && variant.inventoryQuantity <= 0 ? (
+                <><Clock className="h-4 w-4" /> Ön Sipariş Ver</>
               ) : (
                 <><ShoppingCart className="h-4 w-4" /> Sepete Ekle</>
               )}
@@ -438,7 +474,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Toplam satır bilgisi */}
-          {variant && !isOutOfStock && (
+          {variant && (!isOutOfStock || product.isPreorder) && (
             <div className="bg-blue-50 rounded-lg px-4 py-2.5 text-sm">
               <span className="text-gray-600">{quantity} adet × {formatCurrency(Math.round(effectiveWholesale * 100) / 100)} = </span>
               <span className="font-bold text-blue-700">
@@ -487,9 +523,11 @@ export default function ProductDetailPage() {
                             <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
                               v.inventoryQuantity > 0
                                 ? "bg-green-100 text-green-700"
+                                : product.isPreorder
+                                ? "bg-orange-100 text-orange-700"
                                 : "bg-red-100 text-red-600"
                             }`}>
-                              {v.inventoryQuantity > 0 ? v.inventoryQuantity : "Tükendi"}
+                              {v.inventoryQuantity > 0 ? v.inventoryQuantity : product.isPreorder ? "Ön Sipariş" : "Tükendi"}
                             </span>
                           </td>
                         </tr>

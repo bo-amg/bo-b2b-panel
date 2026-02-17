@@ -12,6 +12,7 @@ import {
   FileText,
   ArrowRight,
   AlertCircle,
+  Clock,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -156,6 +157,11 @@ export default function CartPage() {
                         {discountPercent > 0 && (
                           <span className="text-[9px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
                             %{discountPercent}
+                          </span>
+                        )}
+                        {item.isPreorder && (
+                          <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                            <Clock className="h-2.5 w-2.5" /> Ön Sipariş
                           </span>
                         )}
                       </div>

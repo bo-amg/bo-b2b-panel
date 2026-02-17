@@ -12,6 +12,7 @@ import {
   Tag,
   Check,
   SlidersHorizontal,
+  Clock,
 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import Image from "next/image";
@@ -45,6 +46,8 @@ interface Product {
   discountSource: string;
   discountTiers?: Array<{ minQuantity: number; discountPercent: number }>;
   tags: string[];
+  isPreorder?: boolean;
+  preorderNote?: string | null;
 }
 
 type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "discount-desc";
@@ -194,6 +197,7 @@ export default function ProductsPage() {
       retailPrice: variant.retailPrice,
       wholesalePrice: Math.round(wholesalePrice * 100) / 100,
       quantity: qty,
+      isPreorder: product.isPreorder || false,
     });
     setAddedVariant(variant.id);
     setQuantities((prev) => ({ ...prev, [variant.id]: 1 }));
@@ -466,8 +470,14 @@ export default function ProductsPage() {
                     <div className="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
                       %{effectiveDiscount}
                     </div>
-                    {/* Stok yok overlay */}
-                    {product.variants.every((v) => v.inventoryQuantity <= 0) && (
+                    {/* Ön sipariş badge */}
+                    {product.isPreorder && (
+                      <div className="absolute top-1 right-1 bg-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5">
+                        <Clock className="h-2.5 w-2.5" /> ÖN SİPARİŞ
+                      </div>
+                    )}
+                    {/* Stok yok overlay - ön sipariş değilse göster */}
+                    {product.variants.every((v) => v.inventoryQuantity <= 0) && !product.isPreorder && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <span className="bg-white text-gray-600 text-[10px] font-semibold px-2 py-1 rounded">
                           Tükendi
@@ -522,7 +532,11 @@ export default function ProductsPage() {
 
                   {/* Stok */}
                   <p className="text-[9px] text-gray-400 mb-1.5">
-                    Stok: {variant.inventoryQuantity}
+                    {product.isPreorder && variant.inventoryQuantity <= 0 ? (
+                      <span className="text-orange-600 font-medium">Ön sipariş</span>
+                    ) : (
+                      <>Stok: {variant.inventoryQuantity}</>
+                    )}
                     {hasMultipleVariants && ` · ${product.variants.length} varyant`}
                   </p>
 
@@ -553,17 +567,21 @@ export default function ProductsPage() {
 
                     <button
                       onClick={() => handleAddToCart(product, variant)}
-                      disabled={variant.inventoryQuantity <= 0}
+                      disabled={variant.inventoryQuantity <= 0 && !product.isPreorder}
                       className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] font-medium transition ${
                         addedVariant === variant.id
                           ? "bg-green-500 text-white"
-                          : variant.inventoryQuantity <= 0
+                          : variant.inventoryQuantity <= 0 && !product.isPreorder
                             ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                            : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                            : product.isPreorder && variant.inventoryQuantity <= 0
+                              ? "bg-orange-500 text-white hover:bg-orange-600 active:scale-95"
+                              : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
                       }`}
                     >
                       {addedVariant === variant.id ? (
                         <><Check className="h-2.5 w-2.5" /> Eklendi</>
+                      ) : product.isPreorder && variant.inventoryQuantity <= 0 ? (
+                        <><Clock className="h-2.5 w-2.5" /> Ön Sipariş</>
                       ) : (
                         <><ShoppingCart className="h-2.5 w-2.5" /> Ekle</>
                       )}

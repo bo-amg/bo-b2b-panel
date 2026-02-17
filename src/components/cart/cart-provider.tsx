@@ -18,6 +18,7 @@ export interface CartItem {
   retailPrice: number;
   wholesalePrice: number;
   quantity: number;
+  isPreorder?: boolean;
 }
 
 interface CartContextType {

@@ -119,8 +119,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Stok kontrolü (admin atlar)
-    if (!isAdmin && variant.inventoryQuantity < item.quantity) {
+    // Stok kontrolü (admin atlar, ön sipariş ürünleri atlar)
+    const isProductPreorder = product.isPreorder === true;
+    if (!isAdmin && !isProductPreorder && variant.inventoryQuantity < item.quantity) {
       return NextResponse.json(
         {
           error: `Yetersiz stok: ${product.title} (Mevcut: ${variant.inventoryQuantity}, İstenen: ${item.quantity})`,
@@ -170,6 +171,7 @@ export async function POST(req: NextRequest) {
       wholesalePrice,
       discountPercent,
       lineTotal,
+      isPreorder: isProductPreorder,
     });
   }
 
@@ -185,6 +187,9 @@ export async function POST(req: NextRequest) {
   const dueDays = settings?.defaultDueDays ?? 30;
   const dueDate = new Date(Date.now() + dueDays * 24 * 60 * 60 * 1000);
 
+  // Ön sipariş kontrolü
+  const hasPreorderItems = orderItems.some((i: any) => i.isPreorder);
+
   // Sipariş oluştur
   const order = await prisma.order.create({
     data: {
@@ -195,6 +200,7 @@ export async function POST(req: NextRequest) {
       discountPercent: avgDiscount,
       totalAmount: subtotal,
       notes,
+      hasPreorderItems,
       dueDate,
       items: {
         create: orderItems,
