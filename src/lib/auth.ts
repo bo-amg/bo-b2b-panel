@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
@@ -66,6 +66,19 @@ export const authOptions: NextAuthOptions = {
         token.discountPercent = (user as any).discountPercent;
         token.language = (user as any).language;
         token.currency = (user as any).currency;
+      }
+      // When session is updated (e.g. language change), refresh from DB
+      if (trigger === "update" && token.id) {
+        try {
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { language: true, currency: true },
+          });
+          if (freshUser) {
+            token.language = freshUser.language;
+            token.currency = freshUser.currency;
+          }
+        } catch {}
       }
       return token;
     },

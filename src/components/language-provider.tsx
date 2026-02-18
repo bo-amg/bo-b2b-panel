@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { t as translate, type Language } from "@/lib/translations";
 
@@ -22,40 +22,58 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const { data: session, update: updateSession } = useSession();
-  const [lang, setLang] = useState<Language>("TR");
-  const [currency, setCurrency] = useState<CurrencyType>("TRY");
+  const [lang, setLang] = useState<Language>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("b2b-language") as Language;
+      if (stored === "EN" || stored === "TR") return stored;
+    }
+    return "TR";
+  });
+  const [currency, setCurrency] = useState<CurrencyType>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("b2b-currency") as CurrencyType;
+      if (stored === "USD" || stored === "TRY") return stored;
+    }
+    return "TRY";
+  });
 
-  // Initialize from session or localStorage
+  // Track whether user manually changed language — skip session overwrite if so
+  const manualChangeRef = useRef(false);
+
+  // Sync from session ONLY on initial login (not after manual changes)
   useEffect(() => {
+    if (manualChangeRef.current) return; // user just changed it, don't overwrite
     if (session?.user?.language) {
       const sessionLang = session.user.language as Language;
+      const sessionCurrency = (session.user.currency as CurrencyType) || "TRY";
       setLang(sessionLang);
-      setCurrency((session.user.currency as CurrencyType) || "TRY");
+      setCurrency(sessionCurrency);
       localStorage.setItem("b2b-language", sessionLang);
-    } else {
-      const stored = localStorage.getItem("b2b-language") as Language;
-      if (stored === "EN" || stored === "TR") {
-        setLang(stored);
-      }
+      localStorage.setItem("b2b-currency", sessionCurrency);
     }
   }, [session]);
 
   const setLanguage = useCallback(
     async (newLang: Language) => {
+      const newCurrency: CurrencyType = newLang === "EN" ? "USD" : "TRY";
+      manualChangeRef.current = true;
       setLang(newLang);
+      setCurrency(newCurrency);
       localStorage.setItem("b2b-language", newLang);
-      // If logged in, persist to DB
+      localStorage.setItem("b2b-currency", newCurrency);
+      // If logged in, persist to DB and refresh session
       if (session?.user?.id) {
         try {
           await fetch("/api/dealers/language", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ language: newLang }),
+            body: JSON.stringify({ language: newLang, currency: newCurrency }),
           });
-          // Update session so other components see the change
           await updateSession();
         } catch {}
       }
+      // Reset flag after session update completes
+      setTimeout(() => { manualChangeRef.current = false; }, 2000);
     },
     [session, updateSession]
   );

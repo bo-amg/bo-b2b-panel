@@ -211,17 +211,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Language Toggle */}
-            <div className="absolute top-4 right-4">
-              <button
-                type="button"
-                onClick={() => setLanguage(lang === "TR" ? "EN" : "TR")}
-                className="text-white/50 hover:text-white/80 text-xs font-medium transition-colors duration-200"
-              >
-                {lang === "TR" ? "EN" : "TR"}
-              </button>
-            </div>
-
             {/* Logo / Brand */}
             <div className="text-center mb-10">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mb-5 shadow-lg shadow-blue-500/25 animate-float-slow">
@@ -287,6 +276,37 @@ export default function LoginPage() {
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Dealer Location */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-blue-200/70 uppercase tracking-wider">
+                  {t("login.location")}
+                </label>
+                <div className="flex rounded-xl overflow-hidden border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("TR")}
+                    className={`flex-1 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                      lang === "TR"
+                        ? "bg-white/15 text-white backdrop-blur-sm"
+                        : "bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/8"
+                    }`}
+                  >
+                    🇹🇷 TR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("EN")}
+                    className={`flex-1 py-2.5 text-sm font-semibold transition-all duration-300 border-l border-white/10 ${
+                      lang === "EN"
+                        ? "bg-white/15 text-white backdrop-blur-sm"
+                        : "bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/8"
+                    }`}
+                  >
+                    🌍 Global
                   </button>
                 </div>
               </div>

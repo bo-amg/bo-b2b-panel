@@ -11,16 +11,21 @@ export async function PATCH(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { language } = body;
+  const { language, currency } = body;
 
   if (!language || !["TR", "EN"].includes(language)) {
     return NextResponse.json({ error: "Invalid language" }, { status: 400 });
   }
 
+  const data: any = { language };
+  if (currency && ["TRY", "USD"].includes(currency)) {
+    data.currency = currency;
+  }
+
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { language },
+    data,
   });
 
-  return NextResponse.json({ success: true, language });
+  return NextResponse.json({ success: true, language, currency: data.currency });
 }

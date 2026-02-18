@@ -16,6 +16,7 @@ const translations: Record<Language, Record<string, string>> = {
     "login.secureShoppingDesc": "256-bit SSL güvenlik",
     "login.productCount": "2000+ Ürün",
     "login.productCountDesc": "Geniş ürün yelpazesi",
+    "login.location": "Bayi Lokasyonu",
     "login.copyright": "Tüm hakları saklıdır.",
 
     // Navigation
@@ -212,6 +213,7 @@ const translations: Record<Language, Record<string, string>> = {
     "login.secureShoppingDesc": "256-bit SSL security",
     "login.productCount": "2000+ Products",
     "login.productCountDesc": "Wide product range",
+    "login.location": "Dealer Location",
     "login.copyright": "All rights reserved.",
 
     // Navigation
