@@ -51,6 +51,7 @@ export const authOptions: NextAuthOptions = {
           discountPercent: user.discountPercent
             ? Number(user.discountPercent)
             : null,
+          dealerType: user.dealerType,
           language: user.language,
           currency: user.currency,
         };
@@ -64,6 +65,7 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.companyName = (user as any).companyName;
         token.discountPercent = (user as any).discountPercent;
+        token.dealerType = (user as any).dealerType;
         token.language = (user as any).language;
         token.currency = (user as any).currency;
       }
@@ -72,9 +74,10 @@ export const authOptions: NextAuthOptions = {
         try {
           const freshUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { language: true, currency: true },
+            select: { dealerType: true, language: true, currency: true },
           });
           if (freshUser) {
+            token.dealerType = freshUser.dealerType;
             token.language = freshUser.language;
             token.currency = freshUser.currency;
           }
@@ -88,6 +91,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).companyName = token.companyName;
         (session.user as any).discountPercent = token.discountPercent;
+        (session.user as any).dealerType = token.dealerType;
         (session.user as any).language = token.language;
         (session.user as any).currency = token.currency;
       }

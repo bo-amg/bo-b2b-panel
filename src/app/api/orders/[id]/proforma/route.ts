@@ -24,21 +24,35 @@ export async function GET(
   });
 
   if (!order) {
-    return NextResponse.json({ error: "Sipariş bulunamadı" }, { status: 404 });
+    return NextResponse.json({ error: "Siparis bulunamadi" }, { status: 404 });
   }
 
-  // Bayi sadece kendi siparişini görebilir
+  // Bayi sadece kendi siparisini gorebilir
   if (session.user.role === "DEALER" && order.dealerId !== session.user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const settings = await prisma.settings.findUnique({
-    where: { id: "global" },
-  });
+  // DealerType'a gore dogru ayar satirini sec
+  const isGlobalDealer = order.dealer.dealerType === "GLOBAL_BAYI";
+  let settings = null;
+
+  if (isGlobalDealer) {
+    // Global bayi icin once global_dealer ayarlarini dene
+    settings = await prisma.settings.findUnique({
+      where: { id: "global_dealer" },
+    });
+  }
+
+  // Fallback: global ayarlari kullan
+  if (!settings) {
+    settings = await prisma.settings.findUnique({
+      where: { id: "global" },
+    });
+  }
 
   if (!settings) {
     return NextResponse.json(
-      { error: "Ayarlar bulunamadı" },
+      { error: "Ayarlar bulunamadi" },
       { status: 500 }
     );
   }

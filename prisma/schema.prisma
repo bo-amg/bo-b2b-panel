@@ -32,6 +32,11 @@ enum Currency {
   USD
 }
 
+enum DealerType {
+  TR_BAYI
+  GLOBAL_BAYI
+}
+
 model User {
   id              String    @id @default(cuid())
   email           String    @unique
@@ -45,6 +50,7 @@ model User {
   address         String?
   city            String?
   discountPercent    Decimal?  @db.Decimal(5, 2)
+  dealerType         DealerType @default(TR_BAYI)
   language           Language  @default(TR)
   currency           Currency  @default(TRY)
   allowedCollections Json?     @default("[]")
@@ -114,6 +120,7 @@ model ProductCache {
   isPreorder       Boolean  @default(false)
   preorderNote     String?
   usdPrices        Json?    @default("{}")
+  visibility       String   @default("ALL")
   syncedAt         DateTime @default(now())
   favorites        Favorite[]
 }

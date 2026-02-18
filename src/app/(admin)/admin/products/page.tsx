@@ -13,6 +13,8 @@ import {
   Save,
   AlertCircle,
   DollarSign,
+  Globe,
+  Eye,
 } from "lucide-react";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
@@ -35,6 +37,9 @@ export default function AdminProductsPage() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [preorderNote, setPreorderNote] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Görünürlük
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
 
   // USD fiyat modal
   const [showUsdModal, setShowUsdModal] = useState(false);
@@ -265,6 +270,45 @@ export default function AdminProductsPage() {
     setUsdSaving(false);
   }
 
+  async function handleVisibilityChange(productId: string, visibility: string) {
+    try {
+      const res = await fetch("/api/admin/products/visibility", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: [productId], visibility }),
+      });
+      if (res.ok) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, visibility } : p))
+        );
+      }
+    } catch {}
+  }
+
+  async function handleBulkVisibility(visibility: string) {
+    if (selectedIds.size === 0) return;
+    setVisibilitySaving(true);
+    try {
+      const res = await fetch("/api/admin/products/visibility", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: Array.from(selectedIds), visibility }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMessage(`${data.updated} urun gorunurlugu "${visibility}" olarak guncellendi`);
+        setProducts((prev) =>
+          prev.map((p) => (selectedIds.has(p.id) ? { ...p, visibility } : p))
+        );
+        setSelectedIds(new Set());
+        setBulkMode(false);
+      }
+    } catch {
+      setSyncMessage("Hata olustu");
+    }
+    setVisibilitySaving(false);
+  }
+
   const selectAllState =
     selectedIds.size === 0
       ? "none"
@@ -399,7 +443,31 @@ export default function AdminProductsPage() {
               className="inline-flex items-center gap-1.5 bg-gray-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-600 transition disabled:opacity-50"
             >
               <X className="h-3.5 w-3.5" />
-              Ön Sipariş Kapat
+              On Siparis Kapat
+            </button>
+            <span className="w-px h-6 bg-orange-200" />
+            <button
+              onClick={() => handleBulkVisibility("ALL")}
+              disabled={visibilitySaving}
+              className="inline-flex items-center gap-1.5 bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-emerald-600 transition disabled:opacity-50"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Tumu
+            </button>
+            <button
+              onClick={() => handleBulkVisibility("TR_ONLY")}
+              disabled={visibilitySaving}
+              className="inline-flex items-center gap-1.5 bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-orange-600 transition disabled:opacity-50"
+            >
+              TR
+            </button>
+            <button
+              onClick={() => handleBulkVisibility("GLOBAL_ONLY")}
+              disabled={visibilitySaving}
+              className="inline-flex items-center gap-1.5 bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-600 transition disabled:opacity-50"
+            >
+              <Globe className="h-3.5 w-3.5" />
+              Global
             </button>
           </div>
         </div>
@@ -456,8 +524,11 @@ export default function AdminProductsPage() {
                 <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase">
                   Stok
                 </th>
+                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">
+                  Gorunurluk
+                </th>
                 <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">
-                  Ön Sipariş
+                  On Siparis
                 </th>
                 <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">
                   USD
@@ -535,6 +606,23 @@ export default function AdminProductsPage() {
                         {totalStock}
                       </span>
                     </td>
+                    <td className="px-4 py-4 text-center">
+                      <select
+                        value={product.visibility || "ALL"}
+                        onChange={(e) => handleVisibilityChange(product.id, e.target.value)}
+                        className={`text-xs font-medium px-2 py-1 rounded-lg border outline-none cursor-pointer transition ${
+                          product.visibility === "TR_ONLY"
+                            ? "bg-orange-50 border-orange-200 text-orange-700"
+                            : product.visibility === "GLOBAL_ONLY"
+                              ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                              : "bg-gray-50 border-gray-200 text-gray-600"
+                        }`}
+                      >
+                        <option value="ALL">Tumu</option>
+                        <option value="TR_ONLY">Sadece TR</option>
+                        <option value="GLOBAL_ONLY">Sadece Global</option>
+                      </select>
+                    </td>
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => handleTogglePreorder(product)}
@@ -545,7 +633,7 @@ export default function AdminProductsPage() {
                         }`}
                       >
                         <Clock className="h-3 w-3" />
-                        {product.isPreorder ? "Açık" : "Kapalı"}
+                        {product.isPreorder ? "Acik" : "Kapali"}
                       </button>
                     </td>
                     <td className="px-4 py-4 text-center">

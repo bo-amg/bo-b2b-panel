@@ -21,6 +21,7 @@ export async function GET() {
       phone: true,
       taxId: true,
       city: true,
+      dealerType: true,
       discountPercent: true,
       isActive: true,
       createdAt: true,
@@ -51,8 +52,7 @@ export async function POST(req: NextRequest) {
     address,
     city,
     discountPercent,
-    language,
-    currency,
+    dealerType,
   } = body;
 
   if (!email || !password || !companyName || !contactName) {
@@ -73,6 +73,8 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
+  // Derive language/currency from dealerType
+  const isGlobal = dealerType === "GLOBAL_BAYI";
   const dealer = await prisma.user.create({
     data: {
       email,
@@ -86,6 +88,9 @@ export async function POST(req: NextRequest) {
       address,
       city,
       discountPercent: discountPercent ? parseFloat(discountPercent) : null,
+      dealerType: isGlobal ? "GLOBAL_BAYI" : "TR_BAYI",
+      language: isGlobal ? "EN" : "TR",
+      currency: isGlobal ? "USD" : "TRY",
     },
   });
 

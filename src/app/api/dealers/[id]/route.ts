@@ -28,6 +28,7 @@ export async function GET(
       address: true,
       city: true,
       discountPercent: true,
+      dealerType: true,
       language: true,
       currency: true,
       allowedCollections: true,
@@ -74,12 +75,16 @@ export async function PATCH(
         : parseFloat(body.discountPercent);
   }
 
-  // Dil ve para birimi
-  if (body.language !== undefined && ["TR", "EN"].includes(body.language)) {
-    updateData.language = body.language;
-  }
-  if (body.currency !== undefined && ["TRY", "USD"].includes(body.currency)) {
-    updateData.currency = body.currency;
+  // Bayi tipi değiştiğinde dil ve currency otomatik türet
+  if (body.dealerType !== undefined && ["TR_BAYI", "GLOBAL_BAYI"].includes(body.dealerType)) {
+    updateData.dealerType = body.dealerType;
+    if (body.dealerType === "GLOBAL_BAYI") {
+      updateData.language = "EN";
+      updateData.currency = "USD";
+    } else {
+      updateData.language = "TR";
+      updateData.currency = "TRY";
+    }
   }
 
   // Görünürlük ayarları

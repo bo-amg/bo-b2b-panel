@@ -5,10 +5,12 @@ import { useSession } from "next-auth/react";
 import { t as translate, type Language } from "@/lib/translations";
 
 type CurrencyType = "TRY" | "USD";
+type DealerTypeValue = "TR_BAYI" | "GLOBAL_BAYI";
 
 interface LanguageContextType {
   lang: Language;
   currency: CurrencyType;
+  dealerType: DealerTypeValue;
   t: (key: string) => string;
   setLanguage: (lang: Language) => void;
 }
@@ -16,6 +18,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType>({
   lang: "TR",
   currency: "TRY",
+  dealerType: "TR_BAYI",
   t: (key: string) => key,
   setLanguage: () => {},
 });
@@ -36,6 +39,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
     return "TRY";
   });
+  const [dealerType, setDealerType] = useState<DealerTypeValue>("TR_BAYI");
 
   // Track whether user manually changed language — skip session overwrite if so
   const manualChangeRef = useRef(false);
@@ -43,13 +47,28 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Sync from session ONLY on initial login (not after manual changes)
   useEffect(() => {
     if (manualChangeRef.current) return; // user just changed it, don't overwrite
-    if (session?.user?.language) {
-      const sessionLang = session.user.language as Language;
-      const sessionCurrency = (session.user.currency as CurrencyType) || "TRY";
-      setLang(sessionLang);
-      setCurrency(sessionCurrency);
-      localStorage.setItem("b2b-language", sessionLang);
-      localStorage.setItem("b2b-currency", sessionCurrency);
+    if (session?.user) {
+      // Set dealer type from session
+      const dt = (session.user.dealerType as DealerTypeValue) || "TR_BAYI";
+      setDealerType(dt);
+
+      // For admins: use stored language preference
+      if (session.user.role === "ADMIN") {
+        const sessionLang = (session.user.language as Language) || "TR";
+        const sessionCurrency = (session.user.currency as CurrencyType) || "TRY";
+        setLang(sessionLang);
+        setCurrency(sessionCurrency);
+        localStorage.setItem("b2b-language", sessionLang);
+        localStorage.setItem("b2b-currency", sessionCurrency);
+      } else {
+        // Dealer: auto-derive from dealerType
+        const derivedLang: Language = dt === "GLOBAL_BAYI" ? "EN" : "TR";
+        const derivedCurrency: CurrencyType = dt === "GLOBAL_BAYI" ? "USD" : "TRY";
+        setLang(derivedLang);
+        setCurrency(derivedCurrency);
+        localStorage.setItem("b2b-language", derivedLang);
+        localStorage.setItem("b2b-currency", derivedCurrency);
+      }
     }
   }, [session]);
 
@@ -81,7 +100,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const tFn = useCallback((key: string) => translate(key, lang), [lang]);
 
   return (
-    <LanguageContext.Provider value={{ lang, currency, t: tFn, setLanguage }}>
+    <LanguageContext.Provider value={{ lang, currency, dealerType, t: tFn, setLanguage }}>
       {children}
     </LanguageContext.Provider>
   );

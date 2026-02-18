@@ -145,7 +145,7 @@ export default function LoginPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const { t, lang, setLanguage } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -276,37 +276,6 @@ export default function LoginPage() {
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Dealer Location */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-blue-200/70 uppercase tracking-wider">
-                  {t("login.location")}
-                </label>
-                <div className="flex rounded-xl overflow-hidden border border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => setLanguage("TR")}
-                    className={`flex-1 py-2.5 text-sm font-semibold transition-all duration-300 ${
-                      lang === "TR"
-                        ? "bg-white/15 text-white backdrop-blur-sm"
-                        : "bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/8"
-                    }`}
-                  >
-                    🇹🇷 TR
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLanguage("EN")}
-                    className={`flex-1 py-2.5 text-sm font-semibold transition-all duration-300 border-l border-white/10 ${
-                      lang === "EN"
-                        ? "bg-white/15 text-white backdrop-blur-sm"
-                        : "bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/8"
-                    }`}
-                  >
-                    🌍 Global
                   </button>
                 </div>
               </div>

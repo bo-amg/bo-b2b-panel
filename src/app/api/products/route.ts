@@ -24,11 +24,21 @@ export async function GET() {
     );
   });
 
-  // Bayi görünürlük filtresi (koleksiyon + marka kısıtlaması)
+  // Bayi görünürlük filtresi (dealerType + koleksiyon + marka kısıtlaması)
   if (session.user.role === "DEALER") {
     const dealer = await prisma.user.findUnique({
       where: { id: (session.user as any).id },
-      select: { allowedCollections: true, allowedVendors: true, currency: true },
+      select: { dealerType: true, allowedCollections: true, allowedVendors: true, currency: true },
+    });
+
+    // DealerType visibility filtresi
+    const dt = dealer?.dealerType || "TR_BAYI";
+    products = products.filter((p) => {
+      const vis = (p as any).visibility || "ALL";
+      if (vis === "ALL") return true;
+      if (vis === "TR_ONLY" && dt === "TR_BAYI") return true;
+      if (vis === "GLOBAL_ONLY" && dt === "GLOBAL_BAYI") return true;
+      return false;
     });
 
     const allowedCols = (dealer?.allowedCollections as string[]) || [];

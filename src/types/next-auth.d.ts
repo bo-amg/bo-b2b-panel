@@ -9,6 +9,7 @@ declare module "next-auth" {
       role: "ADMIN" | "DEALER";
       companyName: string;
       discountPercent: number | null;
+      dealerType: "TR_BAYI" | "GLOBAL_BAYI";
       language: "TR" | "EN";
       currency: "TRY" | "USD";
     };
@@ -19,6 +20,7 @@ declare module "next-auth" {
     role: "ADMIN" | "DEALER";
     companyName: string;
     discountPercent: number | null;
+    dealerType: "TR_BAYI" | "GLOBAL_BAYI";
     language: "TR" | "EN";
     currency: "TRY" | "USD";
   }
@@ -30,6 +32,7 @@ declare module "next-auth/jwt" {
     role: "ADMIN" | "DEALER";
     companyName: string;
     discountPercent: number | null;
+    dealerType: "TR_BAYI" | "GLOBAL_BAYI";
     language: "TR" | "EN";
     currency: "TRY" | "USD";
   }
