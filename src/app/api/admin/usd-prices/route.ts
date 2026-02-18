@@ -50,19 +50,23 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  // Validate all values are positive numbers
+  // Validate all values are positive numbers or null
+  // null means "remove price", filter them out before saving
+  const cleanPrices: Record<string, number> = {};
   for (const [key, value] of Object.entries(usdPrices)) {
+    if (value === null || value === undefined) continue; // skip null — means no USD price
     if (typeof value !== "number" || value < 0) {
       return NextResponse.json(
         { error: `Invalid price for variant ${key}` },
         { status: 400 }
       );
     }
+    cleanPrices[key] = value;
   }
 
   const updated = await prisma.productCache.update({
     where: { id: productId },
-    data: { usdPrices },
+    data: { usdPrices: cleanPrices },
     select: { id: true, title: true, usdPrices: true },
   });
 

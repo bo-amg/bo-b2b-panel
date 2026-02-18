@@ -224,9 +224,10 @@ export default function AdminProductsPage() {
       const res = await fetch(`/api/admin/usd-prices?productId=${product.id}`);
       if (res.ok) {
         const data = await res.json();
-        // data is expected to be { variantId: price, ... }
+        // data returns { title, usdPrices: { variantId: price }, variants }
+        const prices = data.usdPrices || {};
         const priceMap: Record<string, string> = {};
-        for (const [variantId, price] of Object.entries(data)) {
+        for (const [variantId, price] of Object.entries(prices)) {
           priceMap[variantId] = price != null ? String(price) : "";
         }
         setUsdPrices(priceMap);
