@@ -4,15 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ClipboardList, FileText, Download, Search, X } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-
-const statusLabels: Record<string, string> = {
-  PENDING: "Bekliyor",
-  APPROVED: "Onaylandı",
-  REJECTED: "Reddedildi",
-  SHIPPED: "Kargoda",
-  DELIVERED: "Teslim Edildi",
-  CANCELLED: "İptal",
-};
+import { useLanguage } from "@/components/language-provider";
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -24,10 +16,21 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function OrdersPage() {
+  const { t, lang, currency } = useLanguage();
+  const dateLocale = lang === "EN" ? "en-US" : "tr-TR";
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
+
+  const statusLabels: Record<string, string> = {
+    PENDING: t("status.PENDING"),
+    APPROVED: t("status.APPROVED"),
+    REJECTED: t("status.REJECTED"),
+    SHIPPED: t("status.SHIPPED"),
+    DELIVERED: t("status.DELIVERED"),
+    CANCELLED: t("status.CANCELLED"),
+  };
 
   useEffect(() => {
     const url = filter ? `/api/orders?status=${filter}` : "/api/orders";
@@ -56,12 +59,12 @@ export default function OrdersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4 md:mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Siparişlerim</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t("orders.title")}</h1>
         <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500">
           <FileText className="h-4 w-4 hidden sm:block" />
-          <span>{filteredOrders.length} sipariş</span>
+          <span>{filteredOrders.length} {t("orders.order")}</span>
           <span className="text-gray-300">|</span>
-          <span className="font-medium text-gray-700">{formatCurrency(totalAmount)}</span>
+          <span className="font-medium text-gray-700">{formatCurrency(totalAmount, currency)}</span>
         </div>
       </div>
 
@@ -71,7 +74,7 @@ export default function OrdersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Sipariş no veya ürün adı ara..."
+            placeholder={t("orders.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
@@ -96,7 +99,7 @@ export default function OrdersPage() {
                 : "bg-white text-gray-600 border border-gray-200 active:bg-gray-50"
             }`}
           >
-            {status === "" ? "Tümü" : statusLabels[status]}
+            {status === "" ? t("orders.all") : statusLabels[status]}
           </button>
         ))}
       </div>
@@ -116,7 +119,7 @@ export default function OrdersPage() {
       ) : filteredOrders.length === 0 ? (
         <div className="text-center py-16">
           <ClipboardList className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500">Henüz sipariş bulunmuyor</p>
+          <p className="text-gray-500">{t("orders.noOrders")}</p>
         </div>
       ) : (
         <>
@@ -131,7 +134,7 @@ export default function OrdersPage() {
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <p className="text-sm font-semibold text-blue-600">{order.orderNumber}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{formatDate(order.createdAt)}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{formatDate(order.createdAt, dateLocale)}</p>
                   </div>
                   <span
                     className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[order.status]}`}
@@ -140,17 +143,17 @@ export default function OrdersPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">{order.items?.length || 0} ürün</span>
+                  <span className="text-xs text-gray-500">{order.items?.length || 0} {t("orders.orderItems")}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-gray-900">
-                      {formatCurrency(Number(order.totalAmount))}
+                      {formatCurrency(Number(order.totalAmount), currency)}
                     </span>
                     <a
                       href={`/api/orders/${order.id}/proforma`}
                       target="_blank"
                       onClick={(e) => e.stopPropagation()}
                       className="p-1.5 text-blue-500 hover:text-blue-700 bg-blue-50 rounded-lg"
-                      title="Proforma İndir"
+                      title={t("orders.downloadProforma")}
                     >
                       <Download className="h-3.5 w-3.5" />
                     </a>
@@ -166,22 +169,22 @@ export default function OrdersPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">
-                    Sipariş No
+                    {t("orders.orderNo")}
                   </th>
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">
-                    Tarih
+                    {t("orders.date")}
                   </th>
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">
-                    Kalem
+                    {t("orders.itemCount")}
                   </th>
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">
-                    Durum
+                    {t("orders.status")}
                   </th>
                   <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase">
-                    Tutar
+                    {t("orders.amount")}
                   </th>
                   <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">
-                    Proforma
+                    {t("orders.proforma")}
                   </th>
                 </tr>
               </thead>
@@ -197,10 +200,10 @@ export default function OrdersPage() {
                       </Link>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(order.createdAt)}
+                      {formatDate(order.createdAt, dateLocale)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {order.items?.length || 0} ürün
+                      {order.items?.length || 0} {t("orders.orderItems")}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -210,14 +213,14 @@ export default function OrdersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-medium">
-                      {formatCurrency(Number(order.totalAmount))}
+                      {formatCurrency(Number(order.totalAmount), currency)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <a
                         href={`/api/orders/${order.id}/proforma`}
                         target="_blank"
                         className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
-                        title="Proforma İndir"
+                        title={t("orders.downloadProforma")}
                       >
                         <Download className="h-4 w-4" />
                       </a>

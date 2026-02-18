@@ -51,6 +51,8 @@ export const authOptions: NextAuthOptions = {
           discountPercent: user.discountPercent
             ? Number(user.discountPercent)
             : null,
+          language: user.language,
+          currency: user.currency,
         };
       },
     }),
@@ -62,6 +64,8 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.companyName = (user as any).companyName;
         token.discountPercent = (user as any).discountPercent;
+        token.language = (user as any).language;
+        token.currency = (user as any).currency;
       }
       return token;
     },
@@ -71,6 +75,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).companyName = token.companyName;
         (session.user as any).discountPercent = token.discountPercent;
+        (session.user as any).language = token.language;
+        (session.user as any).currency = token.currency;
       }
       return session;
     },

@@ -184,26 +184,98 @@ const styles = StyleSheet.create({
   },
 });
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("tr-TR", {
+function formatCurrencyPdf(amount: number, currency = "TRY"): string {
+  return new Intl.NumberFormat(currency === "USD" ? "en-US" : "tr-TR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
 }
 
-function formatDate(date: Date | string): string {
-  return new Intl.DateTimeFormat("tr-TR", {
+function currencySymbol(currency = "TRY"): string {
+  return currency === "USD" ? "$" : "TL";
+}
+
+function formatDatePdf(date: Date | string, language = "TR"): string {
+  return new Intl.DateTimeFormat(language === "EN" ? "en-US" : "tr-TR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   }).format(new Date(date));
 }
 
+// PDF label translations
+const pdfLabels = {
+  TR: {
+    proformaTitle: "PROFORMA FATURA",
+    invoiceNo: "Fatura No",
+    date: "Tarih",
+    dueDate: "Vade",
+    buyerInfo: "ALICI BİLGİLERİ",
+    authorized: "Yetkili",
+    address: "Adres",
+    city: "Şehir",
+    phone: "Tel",
+    taxOffice: "V.D.",
+    taxId: "V.N.",
+    orderItems: "SİPARİŞ KALEMLERİ",
+    product: "Ürün",
+    sku: "SKU",
+    qty: "Adet",
+    retailPrice: "Liste Fiyat",
+    wholesalePrice: "Toptan Fiyat",
+    total: "Toplam",
+    subtotalRetail: "Ara Toplam (Liste Fiyat):",
+    discount: "İskonto",
+    grandTotal: "GENEL TOPLAM:",
+    paymentInfo: "ÖDEME BİLGİLERİ",
+    bank: "Banka",
+    iban: "IBAN",
+    accountHolder: "Hesap Sahibi",
+    swift: "SWIFT",
+    paymentTerms: "Ödeme Koşulları",
+    cargoTitle: "KARGO / TESLİMAT",
+    footer: "Bu belge proforma fatura niteliğindedir ve resmi fatura yerine geçmez.",
+  },
+  EN: {
+    proformaTitle: "PROFORMA INVOICE",
+    invoiceNo: "Invoice No",
+    date: "Date",
+    dueDate: "Due Date",
+    buyerInfo: "BUYER INFORMATION",
+    authorized: "Contact",
+    address: "Address",
+    city: "City",
+    phone: "Phone",
+    taxOffice: "Tax Office",
+    taxId: "Tax ID",
+    orderItems: "ORDER ITEMS",
+    product: "Product",
+    sku: "SKU",
+    qty: "Qty",
+    retailPrice: "Retail Price",
+    wholesalePrice: "Wholesale Price",
+    total: "Total",
+    subtotalRetail: "Subtotal (Retail Price):",
+    discount: "Discount",
+    grandTotal: "GRAND TOTAL:",
+    paymentInfo: "PAYMENT INFORMATION",
+    bank: "Bank",
+    iban: "IBAN",
+    accountHolder: "Account Holder",
+    swift: "SWIFT",
+    paymentTerms: "Payment Terms",
+    cargoTitle: "SHIPPING / DELIVERY",
+    footer: "This document is a proforma invoice and does not replace an official invoice.",
+  },
+};
+
 interface ProformaProps {
   order: any;
   dealer: any;
   settings: any;
   items: any[];
+  currency?: string;
+  language?: string;
 }
 
 export function ProformaDocument({
@@ -211,7 +283,14 @@ export function ProformaDocument({
   dealer,
   settings,
   items,
+  currency: currencyProp,
+  language: languageProp,
 }: ProformaProps) {
+  const cur = currencyProp || order.currency || "TRY";
+  const lang = (languageProp || dealer.language || "TR") as "TR" | "EN";
+  const L = pdfLabels[lang];
+  const sym = currencySymbol(cur);
+
   const subtotalRetail = items.reduce(
     (sum, item) => sum + Number(item.retailPrice) * item.quantity,
     0
@@ -228,59 +307,57 @@ export function ProformaDocument({
             <Text style={styles.companyName}>{settings.companyName}</Text>
             <Text style={styles.companyInfo}>
               {settings.companyAddress && `${settings.companyAddress}\n`}
-              {settings.companyPhone && `Tel: ${settings.companyPhone}\n`}
+              {settings.companyPhone && `${lang === "EN" ? "Phone" : "Tel"}: ${settings.companyPhone}\n`}
               {settings.companyEmail && `Email: ${settings.companyEmail}\n`}
               {settings.companyTaxOffice &&
-                `V.D.: ${settings.companyTaxOffice} `}
-              {settings.companyTaxId && `V.N.: ${settings.companyTaxId}`}
+                `${L.taxOffice}: ${settings.companyTaxOffice} `}
+              {settings.companyTaxId && `${L.taxId}: ${settings.companyTaxId}`}
             </Text>
           </View>
           <View>
-            <Text style={styles.invoiceTitle}>PROFORMA FATURA</Text>
+            <Text style={styles.invoiceTitle}>{L.proformaTitle}</Text>
             <Text style={styles.invoiceInfo}>
-              Fatura No: {order.orderNumber}
+              {L.invoiceNo}: {order.orderNumber}
               {"\n"}
-              Tarih: {formatDate(order.createdAt)}
+              {L.date}: {formatDatePdf(order.createdAt, lang)}
               {"\n"}
-              {order.dueDate && `Vade: ${formatDate(order.dueDate)}`}
+              {order.dueDate && `${L.dueDate}: ${formatDatePdf(order.dueDate, lang)}`}
             </Text>
           </View>
         </View>
 
-        {/* Alıcı Bilgileri */}
+        {/* Buyer Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ALICI BİLGİLERİ</Text>
+          <Text style={styles.sectionTitle}>{L.buyerInfo}</Text>
           <View style={styles.dealerInfo}>
             <Text style={styles.bold}>{dealer.companyName}</Text>
-            <Text>Yetkili: {dealer.contactName}</Text>
-            {dealer.address && <Text>Adres: {dealer.address}</Text>}
-            {dealer.city && <Text>Şehir: {dealer.city}</Text>}
-            {dealer.phone && <Text>Tel: {dealer.phone}</Text>}
+            <Text>{L.authorized}: {dealer.contactName}</Text>
+            {dealer.address && <Text>{L.address}: {dealer.address}</Text>}
+            {dealer.city && <Text>{L.city}: {dealer.city}</Text>}
+            {dealer.phone && <Text>{L.phone}: {dealer.phone}</Text>}
             {dealer.taxOffice && (
               <Text>
-                V.D.: {dealer.taxOffice}{" "}
-                {dealer.taxId && `V.N.: ${dealer.taxId}`}
+                {L.taxOffice}: {dealer.taxOffice}{" "}
+                {dealer.taxId && `${L.taxId}: ${dealer.taxId}`}
               </Text>
             )}
           </View>
         </View>
 
-        {/* Ürün Tablosu */}
+        {/* Order Items Table */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>SİPARİŞ KALEMLERİ</Text>
+          <Text style={styles.sectionTitle}>{L.orderItems}</Text>
           <View style={styles.table}>
-            {/* Tablo Başlığı */}
             <View style={styles.tableHeader}>
               <Text style={styles.colNo}>#</Text>
-              <Text style={styles.colProduct}>Ürün</Text>
-              <Text style={styles.colSku}>SKU</Text>
-              <Text style={styles.colQty}>Adet</Text>
-              <Text style={styles.colRetail}>Liste Fiyat</Text>
-              <Text style={styles.colWholesale}>Toptan Fiyat</Text>
-              <Text style={styles.colTotal}>Toplam</Text>
+              <Text style={styles.colProduct}>{L.product}</Text>
+              <Text style={styles.colSku}>{L.sku}</Text>
+              <Text style={styles.colQty}>{L.qty}</Text>
+              <Text style={styles.colRetail}>{L.retailPrice}</Text>
+              <Text style={styles.colWholesale}>{L.wholesalePrice}</Text>
+              <Text style={styles.colTotal}>{L.total}</Text>
             </View>
 
-            {/* Tablo Satırları */}
             {items.map((item, index) => (
               <View
                 key={item.id}
@@ -294,83 +371,83 @@ export function ProformaDocument({
                 <Text style={styles.colSku}>{item.sku || "-"}</Text>
                 <Text style={styles.colQty}>{item.quantity}</Text>
                 <Text style={styles.colRetail}>
-                  {formatCurrency(Number(item.retailPrice))}
+                  {formatCurrencyPdf(Number(item.retailPrice), cur)}
                 </Text>
                 <Text style={styles.colWholesale}>
-                  {formatCurrency(Number(item.wholesalePrice))}
+                  {formatCurrencyPdf(Number(item.wholesalePrice), cur)}
                 </Text>
                 <Text style={styles.colTotal}>
-                  {formatCurrency(Number(item.lineTotal))}
+                  {formatCurrencyPdf(Number(item.lineTotal), cur)}
                 </Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Toplamlar */}
+        {/* Totals */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Ara Toplam (Liste Fiyat):</Text>
+            <Text style={styles.totalLabel}>{L.subtotalRetail}</Text>
             <Text style={styles.totalValue}>
-              {formatCurrency(subtotalRetail)} TL
+              {formatCurrencyPdf(subtotalRetail, cur)} {sym}
             </Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>
-              İskonto (%{Number(order.discountPercent).toFixed(0)}):
+              {L.discount} (%{Number(order.discountPercent).toFixed(0)}):
             </Text>
             <Text style={[styles.totalValue, { color: "#dc2626" }]}>
-              -{formatCurrency(totalDiscount)} TL
+              -{formatCurrencyPdf(totalDiscount, cur)} {sym}
             </Text>
           </View>
           <View style={styles.grandTotal}>
-            <Text style={styles.grandTotalLabel}>GENEL TOPLAM:</Text>
+            <Text style={styles.grandTotalLabel}>{L.grandTotal}</Text>
             <Text style={styles.grandTotalValue}>
-              {formatCurrency(totalAmount)} TL
+              {formatCurrencyPdf(totalAmount, cur)} {sym}
             </Text>
           </View>
         </View>
 
-        {/* Banka Bilgileri */}
+        {/* Payment Info */}
         {(settings.bankName || settings.bankIban) && (
           <View style={styles.bankSection}>
             <Text style={[styles.sectionTitle, { color: "#0369a1" }]}>
-              ÖDEME BİLGİLERİ
+              {L.paymentInfo}
             </Text>
             {settings.bankName && (
               <Text>
-                Banka: <Text style={styles.bold}>{settings.bankName}</Text>
+                {L.bank}: <Text style={styles.bold}>{settings.bankName}</Text>
               </Text>
             )}
             {settings.bankIban && (
               <Text>
-                IBAN: <Text style={styles.bold}>{settings.bankIban}</Text>
+                {L.iban}: <Text style={styles.bold}>{settings.bankIban}</Text>
               </Text>
             )}
             {settings.bankAccountHolder && (
-              <Text>Hesap Sahibi: {settings.bankAccountHolder}</Text>
+              <Text>{L.accountHolder}: {settings.bankAccountHolder}</Text>
             )}
-            {settings.bankSwift && <Text>SWIFT: {settings.bankSwift}</Text>}
+            {settings.bankSwift && <Text>{L.swift}: {settings.bankSwift}</Text>}
             {settings.paymentTerms && (
               <Text>
-                {"\n"}Ödeme Koşulları: {settings.paymentTerms}
+                {"\n"}{L.paymentTerms}: {settings.paymentTerms}
               </Text>
             )}
           </View>
         )}
 
-        {/* Kargo Bilgisi */}
+        {/* Shipping */}
         {settings.cargoInfo && (
           <View style={styles.cargoSection}>
-            <Text style={styles.sectionTitle}>KARGO / TESLİMAT</Text>
+            <Text style={styles.sectionTitle}>{L.cargoTitle}</Text>
             <Text>{settings.cargoInfo}</Text>
           </View>
         )}
 
         {/* Footer */}
         <Text style={styles.footer}>
-          Bu belge proforma fatura niteliğindedir ve resmi fatura yerine geçmez.
-          | {settings.companyName}
+          {L.footer}
+          {" | "}{settings.companyName}
         </Text>
       </Page>
     </Document>

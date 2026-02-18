@@ -17,8 +17,11 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { useLanguage } from "@/components/language-provider";
 
 export default function CartPage() {
+  const { t, lang, currency } = useLanguage();
+  const dateLocale = lang === "EN" ? "en-US" : "tr-TR";
   const { items, removeItem, updateQuantity, clearCart, totalAmount, totalItems } =
     useCart();
   const [notes, setNotes] = useState("");
@@ -74,16 +77,16 @@ export default function CartPage() {
           <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 text-gray-300" />
         </div>
         <h2 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">
-          Sepetiniz Boş
+          {t("cart.empty")}
         </h2>
         <p className="text-gray-400 mb-6 text-sm">
-          Ürün kataloğundan sepete ürün ekleyerek başlayın
+          {t("cart.emptyHint")}
         </p>
         <Link
           href="/products"
           className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition font-medium text-sm active:scale-[0.98]"
         >
-          <Package className="h-4 w-4" /> Ürünlere Git
+          <Package className="h-4 w-4" /> {t("cart.goToProducts")}
         </Link>
       </div>
     );
@@ -93,14 +96,14 @@ export default function CartPage() {
     <div>
       <div className="flex items-center justify-between mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Sepetim</h1>
-          <p className="text-xs md:text-sm text-gray-400">{items.length} ürün, {totalItems} adet</p>
+          <h1 className="text-xl font-bold text-gray-900">{t("cart.title")}</h1>
+          <p className="text-xs md:text-sm text-gray-400">{items.length} {t("cart.items")}, {totalItems} {t("cart.pieces")}</p>
         </div>
         <button
           onClick={clearCart}
           className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 transition active:scale-95"
         >
-          <Trash2 className="h-3.5 w-3.5" /> Sepeti Temizle
+          <Trash2 className="h-3.5 w-3.5" /> {t("cart.clearCart")}
         </button>
       </div>
 
@@ -109,10 +112,10 @@ export default function CartPage() {
         <div className="lg:col-span-2 space-y-2 md:space-y-3">
           {/* Başlık satırı - sadece desktop */}
           <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-gray-400 font-medium uppercase">
-            <div className="col-span-5">Ürün</div>
-            <div className="col-span-2 text-center">Fiyat</div>
-            <div className="col-span-2 text-center">Adet</div>
-            <div className="col-span-2 text-right">Toplam</div>
+            <div className="col-span-5">{t("cart.headerProduct")}</div>
+            <div className="col-span-2 text-center">{t("cart.headerPrice")}</div>
+            <div className="col-span-2 text-center">{t("cart.headerQuantity")}</div>
+            <div className="col-span-2 text-right">{t("cart.headerTotal")}</div>
             <div className="col-span-1"></div>
           </div>
 
@@ -152,7 +155,7 @@ export default function CartPage() {
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-sm font-semibold text-green-600">
-                          {formatCurrency(item.wholesalePrice)}
+                          {formatCurrency(item.wholesalePrice, currency)}
                         </span>
                         {discountPercent > 0 && (
                           <span className="text-[9px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
@@ -161,7 +164,7 @@ export default function CartPage() {
                         )}
                         {item.isPreorder && (
                           <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" /> Ön Sipariş
+                            <Clock className="h-2.5 w-2.5" /> {t("cart.preorder")}
                           </span>
                         )}
                       </div>
@@ -208,11 +211,11 @@ export default function CartPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-gray-900">
-                        {formatCurrency(item.wholesalePrice * item.quantity)}
+                        {formatCurrency(item.wholesalePrice * item.quantity, currency)}
                       </p>
                       {savings > 0 && (
                         <p className="text-[10px] text-green-600">
-                          {formatCurrency(savings)} tasarruf
+                          {formatCurrency(savings, currency)} {t("cart.savings")}
                         </p>
                       )}
                     </div>
@@ -250,10 +253,10 @@ export default function CartPage() {
 
                 <div className="hidden md:block md:col-span-2 text-center">
                   <p className="text-[10px] text-gray-400">
-                    {formatCurrency(item.retailPrice)}
+                    {formatCurrency(item.retailPrice, currency)}
                   </p>
                   <p className="text-sm font-semibold text-green-600">
-                    {formatCurrency(item.wholesalePrice)}
+                    {formatCurrency(item.wholesalePrice, currency)}
                   </p>
                   {discountPercent > 0 && (
                     <span className="text-[9px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
@@ -297,11 +300,11 @@ export default function CartPage() {
 
                 <div className="hidden md:block md:col-span-2 text-right">
                   <p className="text-sm font-bold text-gray-900">
-                    {formatCurrency(item.wholesalePrice * item.quantity)}
+                    {formatCurrency(item.wholesalePrice * item.quantity, currency)}
                   </p>
                   {savings > 0 && (
                     <p className="text-[10px] text-green-600">
-                      {formatCurrency(savings)} tasarruf
+                      {formatCurrency(savings, currency)} {t("cart.savings")}
                     </p>
                   )}
                 </div>
@@ -323,7 +326,7 @@ export default function CartPage() {
             href="/products"
             className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 mt-2 transition"
           >
-            <Package className="h-4 w-4" /> Alışverişe Devam Et
+            <Package className="h-4 w-4" /> {t("cart.continueShopping")}
           </Link>
         </div>
 
@@ -333,7 +336,7 @@ export default function CartPage() {
             <div className="bg-gray-50 px-4 md:px-5 py-3 border-b border-gray-100">
               <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-gray-400" />
-                Sipariş Özeti
+                {t("cart.orderSummary")}
               </h2>
             </div>
 
@@ -341,22 +344,22 @@ export default function CartPage() {
               {/* Detaylar */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Ürün Sayısı</span>
-                  <span className="font-medium text-gray-700">{items.length} kalem</span>
+                  <span className="text-gray-500">{t("cart.productCount")}</span>
+                  <span className="font-medium text-gray-700">{items.length} {t("cart.items")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Toplam Adet</span>
-                  <span className="font-medium text-gray-700">{totalItems} adet</span>
+                  <span className="text-gray-500">{t("cart.totalQuantity")}</span>
+                  <span className="font-medium text-gray-700">{totalItems} {t("cart.pieces")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Perakende Toplam</span>
-                  <span className="text-gray-400 line-through text-xs">{formatCurrency(totalRetail)}</span>
+                  <span className="text-gray-500">{t("cart.retailTotal")}</span>
+                  <span className="text-gray-400 line-through text-xs">{formatCurrency(totalRetail, currency)}</span>
                 </div>
                 {totalSavings > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-green-600">Bayi İskontosu</span>
+                    <span className="text-green-600">{t("cart.dealerDiscount")}</span>
                     <span className="text-green-600 font-medium">
-                      -{formatCurrency(totalSavings)}
+                      -{formatCurrency(totalSavings, currency)}
                     </span>
                   </div>
                 )}
@@ -365,25 +368,25 @@ export default function CartPage() {
               {/* Toplam */}
               <div className="border-t border-gray-100 pt-3">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-base font-bold text-gray-900">Genel Toplam</span>
+                  <span className="text-base font-bold text-gray-900">{t("cart.grandTotal")}</span>
                   <span className="text-xl font-bold text-green-600">
-                    {formatCurrency(totalAmount)}
+                    {formatCurrency(totalAmount, currency)}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-0.5">KDV dahil</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">{t("cart.vatIncluded")}</p>
               </div>
 
               {/* Not alanı */}
               <div className="pt-2">
                 <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Sipariş Notu
+                  {t("cart.orderNote")}
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                  placeholder="Teslimat, paketleme veya özel isteklerinizi yazın..."
+                  placeholder={t("cart.orderNotePlaceholder")}
                 />
               </div>
 
@@ -402,16 +405,16 @@ export default function CartPage() {
                 className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold text-sm disabled:opacity-50 active:scale-[0.98]"
               >
                 {submitting ? (
-                  "Sipariş gönderiliyor..."
+                  t("cart.submitting")
                 ) : (
                   <>
-                    Sipariş Ver <ArrowRight className="h-4 w-4" />
+                    {t("cart.placeOrder")} <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </button>
 
               <p className="text-[10px] text-gray-400 text-center leading-relaxed">
-                Siparişiniz onay sürecine alınacaktır. Onaylandıktan sonra proforma fatura oluşturulacaktır.
+                {t("cart.orderInfo")}
               </p>
             </div>
           </div>

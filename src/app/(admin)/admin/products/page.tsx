@@ -12,6 +12,7 @@ import {
   X,
   Save,
   AlertCircle,
+  DollarSign,
 } from "lucide-react";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
@@ -34,6 +35,13 @@ export default function AdminProductsPage() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [preorderNote, setPreorderNote] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // USD fiyat modal
+  const [showUsdModal, setShowUsdModal] = useState(false);
+  const [usdProduct, setUsdProduct] = useState<any>(null);
+  const [usdPrices, setUsdPrices] = useState<Record<string, string>>({});
+  const [usdLoading, setUsdLoading] = useState(false);
+  const [usdSaving, setUsdSaving] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -199,6 +207,62 @@ export default function AdminProductsPage() {
         )
       );
     } catch {}
+  }
+
+  async function openUsdModal(product: any) {
+    setUsdProduct(product);
+    setShowUsdModal(true);
+    setUsdLoading(true);
+    setUsdPrices({});
+
+    try {
+      const res = await fetch(`/api/admin/usd-prices?productId=${product.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        // data is expected to be { variantId: price, ... }
+        const priceMap: Record<string, string> = {};
+        for (const [variantId, price] of Object.entries(data)) {
+          priceMap[variantId] = price != null ? String(price) : "";
+        }
+        setUsdPrices(priceMap);
+      }
+    } catch {
+      // ignore - will show empty inputs
+    }
+    setUsdLoading(false);
+  }
+
+  async function handleSaveUsdPrices() {
+    if (!usdProduct) return;
+    setUsdSaving(true);
+
+    const pricePayload: Record<string, number | null> = {};
+    for (const [variantId, val] of Object.entries(usdPrices)) {
+      const num = parseFloat(val);
+      pricePayload[variantId] = isNaN(num) ? null : num;
+    }
+
+    try {
+      const res = await fetch("/api/admin/usd-prices", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: usdProduct.id,
+          usdPrices: pricePayload,
+        }),
+      });
+      if (res.ok) {
+        setSyncMessage("USD fiyatları kaydedildi");
+        setShowUsdModal(false);
+        setUsdProduct(null);
+      } else {
+        const data = await res.json();
+        setSyncMessage("Hata: " + (data.error || "USD fiyat kaydedilemedi"));
+      }
+    } catch {
+      setSyncMessage("Hata: USD fiyat kaydedilemedi");
+    }
+    setUsdSaving(false);
   }
 
   const selectAllState =
@@ -395,6 +459,9 @@ export default function AdminProductsPage() {
                 <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">
                   Ön Sipariş
                 </th>
+                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">
+                  USD
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -481,11 +548,99 @@ export default function AdminProductsPage() {
                         {product.isPreorder ? "Açık" : "Kapalı"}
                       </button>
                     </td>
+                    <td className="px-4 py-4 text-center">
+                      <button
+                        onClick={() => openUsdModal(product)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition text-sm font-bold"
+                        title="USD Fiyat"
+                      >
+                        $
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* USD Fiyat Modal */}
+      {showUsdModal && usdProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="bg-green-50 px-6 py-4 border-b border-green-100">
+              <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                USD Fiyat Ayarla
+              </h3>
+              <p className="text-sm text-green-700 mt-1 line-clamp-1">
+                {usdProduct.title}
+              </p>
+            </div>
+            <div className="p-6">
+              {usdLoading ? (
+                <div className="text-center py-8 text-gray-500">Yükleniyor...</div>
+              ) : (
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {usdProduct.variants.map((variant: any) => (
+                    <div
+                      key={variant.id}
+                      className="flex items-center gap-4 bg-gray-50 rounded-lg p-3 border border-gray-200"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {variant.title === "Default Title" ? "Varsayılan" : variant.title}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          TRY: {formatCurrency(variant.retailPrice)}
+                        </p>
+                      </div>
+                      <div className="w-32">
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={usdPrices[variant.id] ?? ""}
+                            onChange={(e) =>
+                              setUsdPrices((prev) => ({
+                                ...prev,
+                                [variant.id]: e.target.value,
+                              }))
+                            }
+                            placeholder="0.00"
+                            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowUsdModal(false);
+                    setUsdProduct(null);
+                    setUsdPrices({});
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleSaveUsdPrices}
+                  disabled={usdSaving || usdLoading}
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 transition disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4" />
+                  {usdSaving ? "Kaydediliyor..." : "Kaydet"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

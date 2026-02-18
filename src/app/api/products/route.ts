@@ -28,7 +28,7 @@ export async function GET() {
   if (session.user.role === "DEALER") {
     const dealer = await prisma.user.findUnique({
       where: { id: (session.user as any).id },
-      select: { allowedCollections: true, allowedVendors: true },
+      select: { allowedCollections: true, allowedVendors: true, currency: true },
     });
 
     const allowedCols = (dealer?.allowedCollections as string[]) || [];
@@ -109,16 +109,33 @@ export async function GET() {
       productTierMap.set(t.referenceId, arr);
     });
 
+  // Dealer currency check
+  let dealerCurrency = "TRY";
+  if (session.user.role === "DEALER") {
+    const dealerInfo = await prisma.user.findUnique({
+      where: { id: (session.user as any).id },
+      select: { currency: true },
+    });
+    dealerCurrency = dealerInfo?.currency || "TRY";
+  }
+  const isUSD = dealerCurrency === "USD";
+
   const productsWithPricing = products.map((p) => {
     const discount = discountMap.get(p.shopifyProductId);
-    const variants = (p.variants as any[]).map((v: any) => ({
-      ...v,
-      retailPrice: parseFloat(v.price),
-      wholesalePrice: calculateWholesalePrice(
-        parseFloat(v.price),
-        discount?.percent ?? 20
-      ),
-    }));
+    const usdPrices = (p.usdPrices as Record<string, number>) || {};
+
+    const variants = (p.variants as any[]).map((v: any) => {
+      const basePrice = isUSD ? (usdPrices[v.id] || 0) : parseFloat(v.price);
+      return {
+        ...v,
+        retailPrice: basePrice,
+        wholesalePrice: calculateWholesalePrice(
+          basePrice,
+          discount?.percent ?? 20
+        ),
+        hasUsdPrice: isUSD ? (usdPrices[v.id] || 0) > 0 : true,
+      };
+    });
 
     // Ürüne uygun tier'ları bul (öncelik: product > category > global)
     let tiers = productTierMap.get(p.shopifyProductId);
@@ -146,6 +163,7 @@ export async function GET() {
       discountPercent: discount?.percent ?? 20,
       discountSource: discount?.source ?? "global",
       discountTiers: tiers.length > 0 ? tiers : undefined,
+      currency: dealerCurrency,
     };
   });
 

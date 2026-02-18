@@ -22,6 +22,16 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum Language {
+  TR
+  EN
+}
+
+enum Currency {
+  TRY
+  USD
+}
+
 model User {
   id              String    @id @default(cuid())
   email           String    @unique
@@ -35,6 +45,8 @@ model User {
   address         String?
   city            String?
   discountPercent    Decimal?  @db.Decimal(5, 2)
+  language           Language  @default(TR)
+  currency           Currency  @default(TRY)
   allowedCollections Json?     @default("[]")
   allowedVendors     Json?     @default("[]")
   isActive           Boolean   @default(true)
@@ -101,6 +113,7 @@ model ProductCache {
   collections      Json?    @default("[]")
   isPreorder       Boolean  @default(false)
   preorderNote     String?
+  usdPrices        Json?    @default("{}")
   syncedAt         DateTime @default(now())
   favorites        Favorite[]
 }

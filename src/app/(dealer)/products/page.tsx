@@ -18,6 +18,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { useLanguage } from "@/components/language-provider";
 
 interface Collection {
   id: string;
@@ -61,6 +62,8 @@ const sortLabels: Record<SortOption, string> = {
 };
 
 export default function ProductsPage() {
+  const { t, lang, currency } = useLanguage();
+  const dateLocale = lang === "EN" ? "en-US" : "tr-TR";
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -121,12 +124,10 @@ export default function ProductsPage() {
     });
 
     result.sort((a, b) => {
-      // Önce stok durumuna göre: stokta olanlar üstte, tükenenler altta
       const aInStock = a.variants.some((v) => v.inventoryQuantity > 0) ? 0 : 1;
       const bInStock = b.variants.some((v) => v.inventoryQuantity > 0) ? 0 : 1;
       if (aInStock !== bInStock) return aInStock - bInStock;
 
-      // Sonra seçilen sıralamaya göre
       switch (sortBy) {
         case "name-asc": return a.title.localeCompare(b.title, "tr");
         case "name-desc": return b.title.localeCompare(a.title, "tr");
@@ -241,7 +242,7 @@ export default function ProductsPage() {
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
             <input
               type="text"
-              placeholder="Ürün, marka veya SKU ara..."
+              placeholder={t("products.search")}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true); }}
               onFocus={() => search.length >= 2 && setShowSuggestions(true)}
@@ -279,7 +280,7 @@ export default function ProductsPage() {
                       <p className="text-xs font-medium text-gray-900 truncate">{p.title}</p>
                       <p className="text-[10px] text-gray-400">
                         {p.vendor && `${p.vendor} · `}
-                        {formatCurrency(p.variants[0]?.wholesalePrice || 0)}
+                        {formatCurrency(p.variants[0]?.wholesalePrice || 0, currency)}
                       </p>
                     </div>
                     {p.discountPercent > 0 && (
@@ -302,7 +303,7 @@ export default function ProductsPage() {
             }`}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
-            Filtre
+            {t("products.filter")}
             {activeFilterCount > 0 && (
               <span className="bg-blue-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
                 {activeFilterCount}
@@ -328,7 +329,7 @@ export default function ProductsPage() {
           </div>
 
           <span className="text-[11px] text-gray-400 whitespace-nowrap hidden sm:block">
-            {filtered.length} ürün
+            {filtered.length} {t("products.product")}
           </span>
         </div>
 
@@ -341,7 +342,7 @@ export default function ProductsPage() {
                 onChange={(e) => setSelectedCollection(e.target.value)}
                 className="w-full appearance-none pl-2.5 pr-7 py-1.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-xs bg-white"
               >
-                <option value="">Tüm Kategoriler</option>
+                <option value="">{t("products.allCategories")}</option>
                 {collections.map((c) => (
                   <option key={c.id} value={c.id}>{c.title}</option>
                 ))}
@@ -355,7 +356,7 @@ export default function ProductsPage() {
                 onChange={(e) => setSelectedVendor(e.target.value)}
                 className="w-full appearance-none pl-2.5 pr-7 py-1.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-xs bg-white"
               >
-                <option value="">Tüm Markalar</option>
+                <option value="">{t("products.allBrands")}</option>
                 {vendors.map((v) => (
                   <option key={v} value={v}>{v}</option>
                 ))}
@@ -370,7 +371,7 @@ export default function ProductsPage() {
                 onChange={(e) => setStockOnly(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
               />
-              Stokta olanlar
+              {t("products.inStock")}
             </label>
 
             {/* Mobil sıralama */}
@@ -392,7 +393,7 @@ export default function ProductsPage() {
                 onClick={clearFilters}
                 className="flex items-center gap-1 text-[11px] text-red-600 hover:text-red-700"
               >
-                <X className="h-3 w-3" /> Temizle
+                <X className="h-3 w-3" /> {t("products.clear")}
               </button>
             )}
           </div>
@@ -416,7 +417,7 @@ export default function ProductsPage() {
             )}
             {stockOnly && (
               <span className="inline-flex items-center gap-1 text-[10px] bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
-                Stokta
+                {t("products.inStockLabel")}
                 <button onClick={() => setStockOnly(false)}><X className="h-2.5 w-2.5" /></button>
               </span>
             )}
@@ -428,9 +429,9 @@ export default function ProductsPage() {
       {filtered.length === 0 ? (
         <div className="text-center py-16">
           <Package className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500 text-sm font-medium">Ürün bulunamadı</p>
+          <p className="text-gray-500 text-sm font-medium">{t("products.notFound")}</p>
           <button onClick={clearFilters} className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium">
-            Filtreleri Temizle
+            {t("products.clearFilters")}
           </button>
         </div>
       ) : (
@@ -471,14 +472,14 @@ export default function ProductsPage() {
                     {/* Ön sipariş badge */}
                     {product.isPreorder && (
                       <div className="absolute top-1 right-1 bg-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5">
-                        <Clock className="h-2.5 w-2.5" /> ÖN SİPARİŞ
+                        <Clock className="h-2.5 w-2.5" /> {t("products.preorder")}
                       </div>
                     )}
                     {/* Stok yok overlay - ön sipariş değilse göster */}
                     {product.variants.every((v) => v.inventoryQuantity <= 0) && !product.isPreorder && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <span className="bg-white text-gray-600 text-[10px] font-semibold px-2 py-1 rounded">
-                          Tükendi
+                          {t("products.outOfStock")}
                         </span>
                       </div>
                     )}
@@ -501,10 +502,10 @@ export default function ProductsPage() {
                   {/* Fiyatlar */}
                   <div className="flex items-baseline gap-1.5 mb-1.5">
                     <span className="text-[10px] text-gray-400">
-                      {formatCurrency(variant.retailPrice)}
+                      {formatCurrency(variant.retailPrice, currency)}
                     </span>
                     <span className="text-xs font-bold text-green-600">
-                      {formatCurrency(Math.round(effectiveWholesale * 100) / 100)}
+                      {formatCurrency(Math.round(effectiveWholesale * 100) / 100, currency)}
                     </span>
                   </div>
 
@@ -531,9 +532,9 @@ export default function ProductsPage() {
                   {/* Stok */}
                   <p className="text-[9px] text-gray-400 mb-1.5">
                     {product.isPreorder && variant.inventoryQuantity <= 0 ? (
-                      <span className="text-orange-600 font-medium">Ön sipariş</span>
+                      <span className="text-orange-600 font-medium">{t("products.preorderLabel")}</span>
                     ) : (
-                      <>Stok: {variant.inventoryQuantity}</>
+                      <>{t("products.stock")}: {variant.inventoryQuantity}</>
                     )}
                   </p>
 
@@ -576,11 +577,11 @@ export default function ProductsPage() {
                       }`}
                     >
                       {addedVariant === variant.id ? (
-                        <><Check className="h-2.5 w-2.5" /> Eklendi</>
+                        <><Check className="h-2.5 w-2.5" /> {t("products.added")}</>
                       ) : product.isPreorder && variant.inventoryQuantity <= 0 ? (
-                        <><Clock className="h-2.5 w-2.5" /> Ön Sipariş</>
+                        <><Clock className="h-2.5 w-2.5" /> {t("products.preorderLabel")}</>
                       ) : (
-                        <><ShoppingCart className="h-2.5 w-2.5" /> Ekle</>
+                        <><ShoppingCart className="h-2.5 w-2.5" /> {t("products.add")}</>
                       )}
                     </button>
                   </div>
@@ -588,7 +589,7 @@ export default function ProductsPage() {
                   {/* Sonraki tier notu */}
                   {nextTier && (
                     <p className="text-[8px] text-orange-600 mt-1 bg-orange-50 px-1.5 py-0.5 rounded text-center">
-                      {nextTier.minQuantity}+ adet = %{nextTier.discountPercent}
+                      {nextTier.minQuantity}+ {t("productDetail.tierUnit")} = %{nextTier.discountPercent}
                     </p>
                   )}
                 </div>

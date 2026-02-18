@@ -449,6 +449,34 @@ export default function EditDealerPage() {
             placeholder="••••••••"
           />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Dil
+            </label>
+            <select
+              name="language"
+              defaultValue={dealer.language || "TR"}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            >
+              <option value="TR">TR (Turkce)</option>
+              <option value="EN">EN (English)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Para Birimi
+            </label>
+            <select
+              name="currency"
+              defaultValue={dealer.currency || "TRY"}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            >
+              <option value="TRY">TRY (Turk Lirasi)</option>
+              <option value="USD">USD (Amerikan Dolari)</option>
+            </select>
+          </div>
+        </div>
 
         {error && (
           <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">

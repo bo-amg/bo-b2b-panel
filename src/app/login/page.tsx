@@ -14,6 +14,7 @@ import {
   Truck,
   ShieldCheck,
 } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 
 interface Banner {
   id: string;
@@ -144,6 +145,7 @@ export default function LoginPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const { t, lang, setLanguage } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -165,7 +167,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setError("Email veya şifre hatalı");
+      setError(t("login.error"));
       setLoading(false);
     } else {
       router.push("/");
@@ -209,16 +211,27 @@ export default function LoginPage() {
               </div>
             )}
 
+            {/* Language Toggle */}
+            <div className="absolute top-4 right-4">
+              <button
+                type="button"
+                onClick={() => setLanguage(lang === "TR" ? "EN" : "TR")}
+                className="text-white/50 hover:text-white/80 text-xs font-medium transition-colors duration-200"
+              >
+                {lang === "TR" ? "EN" : "TR"}
+              </button>
+            </div>
+
             {/* Logo / Brand */}
             <div className="text-center mb-10">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mb-5 shadow-lg shadow-blue-500/25 animate-float-slow">
                 <Gamepad2 className="h-8 w-8 text-white" />
               </div>
               <h1 className="text-3xl font-bold text-white tracking-tight">
-                Büyüklere Oyuncaklar
+                {t("login.title")}
               </h1>
               <p className="text-blue-200/60 mt-2 text-sm font-medium tracking-wider uppercase">
-                B2B Bayi Portalı
+                {t("login.subtitle")}
               </p>
             </div>
 
@@ -229,7 +242,7 @@ export default function LoginPage() {
                   htmlFor="email"
                   className="block text-xs font-semibold text-blue-200/70 uppercase tracking-wider"
                 >
-                  Email Adresi
+                  {t("login.email")}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
@@ -251,7 +264,7 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="block text-xs font-semibold text-blue-200/70 uppercase tracking-wider"
                 >
-                  Şifre
+                  {t("login.password")}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
@@ -313,10 +326,10 @@ export default function LoginPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                       />
                     </svg>
-                    Giriş yapılıyor...
+                    {t("login.loading")}
                   </span>
                 ) : (
-                  "Giriş Yap"
+                  t("login.submit")
                 )}
               </button>
             </form>
@@ -329,7 +342,7 @@ export default function LoginPage() {
                     <Truck className="h-4 w-4 text-blue-300/60 group-hover:text-blue-300 transition" />
                   </div>
                   <p className="text-[10px] text-white/30 group-hover:text-white/50 transition font-medium">
-                    Hızlı Teslimat
+                    {t("login.fastDelivery")}
                   </p>
                 </div>
                 <div className="text-center group">
@@ -337,7 +350,7 @@ export default function LoginPage() {
                     <ShieldCheck className="h-4 w-4 text-emerald-300/60 group-hover:text-emerald-300 transition" />
                   </div>
                   <p className="text-[10px] text-white/30 group-hover:text-white/50 transition font-medium">
-                    Güvenli Alışveriş
+                    {t("login.secureShopping")}
                   </p>
                 </div>
                 <div className="text-center group">
@@ -345,7 +358,7 @@ export default function LoginPage() {
                     <Gamepad2 className="h-4 w-4 text-purple-300/60 group-hover:text-purple-300 transition" />
                   </div>
                   <p className="text-[10px] text-white/30 group-hover:text-white/50 transition font-medium">
-                    2000+ Ürün
+                    {t("login.productCount")}
                   </p>
                 </div>
               </div>
@@ -355,7 +368,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-white/20 text-xs mt-6 font-medium">
-          &copy; {new Date().getFullYear()} Büyüklere Oyuncaklar. Tüm hakları saklıdır.
+          &copy; {new Date().getFullYear()} {t("login.title")}. {t("login.copyright")}
         </p>
       </div>
     </div>

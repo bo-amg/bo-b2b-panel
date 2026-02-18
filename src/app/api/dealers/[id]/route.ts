@@ -28,6 +28,8 @@ export async function GET(
       address: true,
       city: true,
       discountPercent: true,
+      language: true,
+      currency: true,
       allowedCollections: true,
       allowedVendors: true,
       isActive: true,
@@ -70,6 +72,14 @@ export async function PATCH(
       body.discountPercent === null || body.discountPercent === ""
         ? null
         : parseFloat(body.discountPercent);
+  }
+
+  // Dil ve para birimi
+  if (body.language !== undefined && ["TR", "EN"].includes(body.language)) {
+    updateData.language = body.language;
+  }
+  if (body.currency !== undefined && ["TRY", "USD"].includes(body.currency)) {
+    updateData.currency = body.currency;
   }
 
   // Görünürlük ayarları

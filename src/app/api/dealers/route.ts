@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
     address,
     city,
     discountPercent,
+    language,
+    currency,
   } = body;
 
   if (!email || !password || !companyName || !contactName) {

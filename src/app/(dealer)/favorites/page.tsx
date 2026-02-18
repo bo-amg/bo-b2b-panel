@@ -6,6 +6,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { useLanguage } from "@/components/language-provider";
 
 interface FavoriteItem {
   id: string;
@@ -23,6 +24,8 @@ interface FavoriteItem {
 }
 
 export default function FavoritesPage() {
+  const { t, lang, currency } = useLanguage();
+  const dateLocale = lang === "EN" ? "en-US" : "tr-TR";
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
@@ -93,24 +96,24 @@ export default function FavoritesPage() {
     <div>
       <div className="flex items-center gap-3 mb-6">
         <Heart className="h-6 w-6 text-red-500 fill-current" />
-        <h1 className="text-xl font-bold text-gray-900">Favorilerim</h1>
-        <span className="text-sm text-gray-400">({favorites.length} ürün)</span>
+        <h1 className="text-xl font-bold text-gray-900">{t("favorites.title")}</h1>
+        <span className="text-sm text-gray-400">({favorites.length} {t("products.product")})</span>
       </div>
 
       {favorites.length === 0 ? (
         <div className="text-center py-16">
           <Heart className="h-12 w-12 mx-auto mb-4 text-gray-200" />
           <h2 className="text-lg font-semibold text-gray-600 mb-2">
-            Henüz favori ürününüz yok
+            {t("favorites.empty")}
           </h2>
           <p className="text-sm text-gray-400 mb-4">
-            Ürün kataloğundan beğendiğiniz ürünleri favorilere ekleyin
+            {t("favorites.emptyHint")}
           </p>
           <Link
             href="/products"
             className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium"
           >
-            <Package className="h-4 w-4" /> Ürünlere Git
+            <Package className="h-4 w-4" /> {t("favorites.goToProducts")}
           </Link>
         </div>
       ) : (
@@ -158,7 +161,7 @@ export default function FavoritesPage() {
                   <button
                     onClick={() => removeFavorite(fav.productCacheId)}
                     className="absolute -top-4 right-2 p-1.5 bg-white rounded-full shadow-md text-red-400 hover:text-red-600 transition z-10"
-                    title="Favorilerden kaldır"
+                    title={t("favorites.remove")}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -180,10 +183,10 @@ export default function FavoritesPage() {
                   {/* Fiyat */}
                   <div className="flex items-baseline gap-1.5 mb-2">
                     <span className="text-[10px] text-gray-400">
-                      {formatCurrency(variant.retailPrice)}
+                      {formatCurrency(variant.retailPrice, currency)}
                     </span>
                     <span className="text-sm font-bold text-green-600">
-                      {formatCurrency(variant.wholesalePrice)}
+                      {formatCurrency(variant.wholesalePrice, currency)}
                     </span>
                   </div>
 
@@ -216,9 +219,9 @@ export default function FavoritesPage() {
                       }`}
                     >
                       {addedVariant === variant.id ? (
-                        <><Check className="h-2.5 w-2.5" /> Eklendi</>
+                        <><Check className="h-2.5 w-2.5" /> {t("products.added")}</>
                       ) : (
-                        <><ShoppingCart className="h-2.5 w-2.5" /> Ekle</>
+                        <><ShoppingCart className="h-2.5 w-2.5" /> {t("products.add")}</>
                       )}
                     </button>
                   </div>

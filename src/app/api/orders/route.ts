@@ -130,7 +130,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const retailPrice = parseFloat(variant.price);
+    // USD fiyat desteği
+    const dealerCurrency = dealer.currency || "TRY";
+    const isUSD = dealerCurrency === "USD";
+    const usdPrices = (product.usdPrices as Record<string, number>) || {};
+    const retailPrice = isUSD ? (usdPrices[item.shopifyVariantId] || 0) : parseFloat(variant.price);
+
+    if (isUSD && retailPrice === 0) {
+      return NextResponse.json(
+        { error: `USD price not set for: ${product.title}` },
+        { status: 400 }
+      );
+    }
+
     let wholesalePrice: number;
     let discountPercent: number;
 
@@ -199,6 +211,7 @@ export async function POST(req: NextRequest) {
       subtotal,
       discountPercent: avgDiscount,
       totalAmount: subtotal,
+      currency: dealer.currency || "TRY",
       notes,
       hasPreorderItems,
       dueDate,

@@ -24,15 +24,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { formatCurrency, formatDate } from "@/lib/utils";
-
-const statusLabels: Record<string, string> = {
-  PENDING: "Bekliyor",
-  APPROVED: "Onaylandı",
-  REJECTED: "Reddedildi",
-  SHIPPED: "Kargoda",
-  DELIVERED: "Teslim Edildi",
-  CANCELLED: "İptal",
-};
+import { useLanguage } from "@/components/language-provider";
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -62,10 +54,21 @@ interface Order {
 
 export default function DealerDashboard() {
   const { data: session } = useSession();
+  const { t, lang, currency } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
   const [newProducts, setNewProducts] = useState<any[]>([]);
+  const dateLocale = lang === "EN" ? "en-US" : "tr-TR";
+
+  const statusLabels: Record<string, string> = {
+    PENDING: t("status.PENDING"),
+    APPROVED: t("status.APPROVED"),
+    REJECTED: t("status.REJECTED"),
+    SHIPPED: t("status.SHIPPED"),
+    DELIVERED: t("status.DELIVERED"),
+    CANCELLED: t("status.CANCELLED"),
+  };
 
   useEffect(() => {
     fetch("/api/orders")
@@ -157,7 +160,7 @@ export default function DealerDashboard() {
         return od.getMonth() === m && od.getFullYear() === y;
       });
       monthlyData.push({
-        month: d.toLocaleDateString("tr-TR", { month: "short" }),
+        month: d.toLocaleDateString(dateLocale, { month: "short" }),
         total: monthOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
         count: monthOrders.length,
       });
@@ -222,10 +225,10 @@ export default function DealerDashboard() {
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-          Hoş geldiniz, {session?.user?.companyName}
+          {t("dashboard.welcome")}, {session?.user?.companyName}
         </h1>
         <p className="text-xs md:text-sm text-gray-500 mt-1">
-          {new Date().toLocaleDateString("tr-TR", {
+          {new Date().toLocaleDateString(dateLocale, {
             weekday: "long",
             day: "numeric",
             month: "long",
@@ -240,19 +243,19 @@ export default function DealerDashboard() {
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 md:p-5 text-white shadow-lg shadow-blue-500/20">
           <div className="flex items-center gap-2 mb-2">
             <Banknote className="h-4 w-4 text-blue-200" />
-            <p className="text-xs text-blue-100 font-medium">Toplam Harcama</p>
+            <p className="text-xs text-blue-100 font-medium">{t("dashboard.totalSpent")}</p>
           </div>
-          <p className="text-lg md:text-xl font-bold truncate">{formatCurrency(metrics?.totalSpent || 0)}</p>
-          <p className="text-[11px] text-blue-200 mt-1">{metrics?.totalOrders || 0} sipariş</p>
+          <p className="text-lg md:text-xl font-bold truncate">{formatCurrency(metrics?.totalSpent || 0, currency)}</p>
+          <p className="text-[11px] text-blue-200 mt-1">{metrics?.totalOrders || 0} {t("dashboard.orders")}</p>
         </div>
 
         {/* Bu Ay */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <CalendarDays className="h-4 w-4 text-gray-400" />
-            <p className="text-xs text-gray-500 font-medium">Bu Ay</p>
+            <p className="text-xs text-gray-500 font-medium">{t("dashboard.thisMonth")}</p>
           </div>
-          <p className="text-lg md:text-xl font-bold text-gray-900 truncate">{formatCurrency(metrics?.thisMonthTotal || 0)}</p>
+          <p className="text-lg md:text-xl font-bold text-gray-900 truncate">{formatCurrency(metrics?.thisMonthTotal || 0, currency)}</p>
           {metrics && metrics.monthlyChange !== 0 && (
             <div className={`flex items-center gap-1 mt-1 ${metrics.monthlyChange > 0 ? "text-green-600" : "text-red-500"}`}>
               {metrics.monthlyChange > 0 ? (
@@ -261,7 +264,7 @@ export default function DealerDashboard() {
                 <TrendingDown className="h-3 w-3" />
               )}
               <span className="text-[11px] font-medium">
-                %{Math.abs(Math.round(metrics.monthlyChange))} {metrics.monthlyChange > 0 ? "artış" : "düşüş"}
+                %{Math.abs(Math.round(metrics.monthlyChange))} {metrics.monthlyChange > 0 ? t("dashboard.increase") : t("dashboard.decrease")}
               </span>
             </div>
           )}
@@ -271,20 +274,20 @@ export default function DealerDashboard() {
         <div className="bg-white rounded-xl p-4 md:p-5 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="h-4 w-4 text-amber-500" />
-            <p className="text-xs text-gray-500 font-medium">Açık Siparişler</p>
+            <p className="text-xs text-gray-500 font-medium">{t("dashboard.openOrders")}</p>
           </div>
-          <p className="text-lg md:text-xl font-bold text-amber-600 truncate">{formatCurrency(metrics?.unpaidTotal || 0)}</p>
-          <p className="text-[11px] text-gray-400 mt-1">Ödeme bekleyen</p>
+          <p className="text-lg md:text-xl font-bold text-amber-600 truncate">{formatCurrency(metrics?.unpaidTotal || 0, currency)}</p>
+          <p className="text-[11px] text-gray-400 mt-1">{t("dashboard.paymentPending")}</p>
         </div>
 
         {/* Ort. Sipariş */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="h-4 w-4 text-gray-400" />
-            <p className="text-xs text-gray-500 font-medium">Ort. Sipariş</p>
+            <p className="text-xs text-gray-500 font-medium">{t("dashboard.avgOrder")}</p>
           </div>
-          <p className="text-lg md:text-xl font-bold text-gray-900 truncate">{formatCurrency(metrics?.avgOrderValue || 0)}</p>
-          <p className="text-[11px] text-gray-400 mt-1">{metrics?.totalItems || 0} adet ürün</p>
+          <p className="text-lg md:text-xl font-bold text-gray-900 truncate">{formatCurrency(metrics?.avgOrderValue || 0, currency)}</p>
+          <p className="text-[11px] text-gray-400 mt-1">{metrics?.totalItems || 0} {t("dashboard.items")}</p>
         </div>
       </div>
 
@@ -292,19 +295,19 @@ export default function DealerDashboard() {
       <div className="grid grid-cols-4 gap-2 md:gap-3 mb-6">
         <div className="bg-yellow-50 rounded-lg p-2 md:p-3 text-center border border-yellow-100">
           <p className="text-base md:text-lg font-bold text-yellow-700">{metrics?.pendingCount || 0}</p>
-          <p className="text-[10px] md:text-[11px] text-yellow-600">Bekleyen</p>
+          <p className="text-[10px] md:text-[11px] text-yellow-600">{t("dashboard.pending")}</p>
         </div>
         <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center border border-green-100">
           <p className="text-base md:text-lg font-bold text-green-700">{metrics?.approvedCount || 0}</p>
-          <p className="text-[10px] md:text-[11px] text-green-600">Onaylanan</p>
+          <p className="text-[10px] md:text-[11px] text-green-600">{t("dashboard.approved")}</p>
         </div>
         <div className="bg-blue-50 rounded-lg p-2 md:p-3 text-center border border-blue-100">
           <p className="text-base md:text-lg font-bold text-blue-700">{metrics?.shippedCount || 0}</p>
-          <p className="text-[10px] md:text-[11px] text-blue-600">Kargoda</p>
+          <p className="text-[10px] md:text-[11px] text-blue-600">{t("dashboard.shipped")}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-2 md:p-3 text-center border border-gray-200">
           <p className="text-base md:text-lg font-bold text-gray-700">{metrics?.deliveredCount || 0}</p>
-          <p className="text-[10px] md:text-[11px] text-gray-500">Teslim</p>
+          <p className="text-[10px] md:text-[11px] text-gray-500">{t("dashboard.delivered")}</p>
         </div>
       </div>
 
@@ -314,7 +317,7 @@ export default function DealerDashboard() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-blue-500" />
-            Aylık Harcama (Son 6 Ay)
+            {t("dashboard.monthlySpending")}
           </h2>
           {metrics && (
             <div className="flex items-end gap-2 h-40">
@@ -324,7 +327,7 @@ export default function DealerDashboard() {
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1">
                     <span className="text-[10px] text-gray-500 font-medium">
-                      {m.total > 0 ? formatCurrency(m.total).replace("₺", "").trim() : "-"}
+                      {m.total > 0 ? formatCurrency(m.total, currency).replace(currency === "USD" ? "$" : "₺", "").trim() : "-"}
                     </span>
                     <div className="w-full relative" style={{ height: "120px" }}>
                       <div
@@ -337,7 +340,7 @@ export default function DealerDashboard() {
                       />
                     </div>
                     <span className="text-[10px] text-gray-500">{m.month}</span>
-                    <span className="text-[9px] text-gray-400">{m.count} sipariş</span>
+                    <span className="text-[9px] text-gray-400">{m.count} {t("dashboard.orders")}</span>
                   </div>
                 );
               })}
@@ -349,7 +352,7 @@ export default function DealerDashboard() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
             <Star className="h-4 w-4 text-amber-500" />
-            En Çok Sipariş Edilen Ürünler
+            {t("dashboard.topProducts")}
           </h2>
           {metrics && metrics.topProducts.length > 0 ? (
             <div className="space-y-3">
@@ -371,7 +374,7 @@ export default function DealerDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-900 font-medium truncate">{product.title}</p>
                     <p className="text-[11px] text-gray-400">
-                      {product.quantity} adet &middot; {formatCurrency(product.total)}
+                      {product.quantity} {t("dashboard.items")} &middot; {formatCurrency(product.total, currency)}
                     </p>
                   </div>
                 </div>
@@ -379,7 +382,7 @@ export default function DealerDashboard() {
             </div>
           ) : (
             <div className="text-center py-8 text-gray-400 text-sm">
-              Henüz sipariş vermediniz
+              {t("dashboard.noOrders")}
             </div>
           )}
         </div>
@@ -390,7 +393,7 @@ export default function DealerDashboard() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
             <Eye className="h-4 w-4 text-purple-500" />
-            Son Görüntülenen Ürünler
+            {t("dashboard.recentlyViewed")}
           </h2>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {recentlyViewed.map((item, i) => (
@@ -414,7 +417,7 @@ export default function DealerDashboard() {
                   {item.title}
                 </p>
                 <p className="text-[10px] text-green-600 font-semibold mt-0.5">
-                  {formatCurrency(item.wholesalePrice)}
+                  {formatCurrency(item.wholesalePrice, currency)}
                 </p>
               </Link>
             ))}
@@ -428,10 +431,10 @@ export default function DealerDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-emerald-500" />
-              Yeni Eklenen Ürünler
+              {t("dashboard.newProducts")}
             </h2>
             <Link href="/products" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-              Tümünü Gör <ArrowRight className="h-3 w-3" />
+              {t("dashboard.viewAll")} <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
@@ -462,7 +465,7 @@ export default function DealerDashboard() {
                 </p>
                 {product.variants?.[0] && (
                   <p className="text-[10px] text-green-600 font-semibold mt-0.5">
-                    {formatCurrency(product.variants[0].wholesalePrice)}
+                    {formatCurrency(product.variants[0].wholesalePrice, currency)}
                   </p>
                 )}
               </Link>
@@ -482,9 +485,9 @@ export default function DealerDashboard() {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition">
-              Ürün Kataloğu
+              {t("dashboard.productCatalog")}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Ürünleri incele ve sipariş ver</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t("dashboard.browseProducts")}</p>
           </div>
           <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 transition" />
         </Link>
@@ -498,9 +501,9 @@ export default function DealerDashboard() {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition">
-              Siparişlerim
+              {t("dashboard.myOrders")}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Sipariş geçmişi ve takip</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t("dashboard.orderHistory")}</p>
           </div>
           <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-purple-500 transition" />
         </Link>
@@ -510,9 +513,9 @@ export default function DealerDashboard() {
       {orders.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-700">Son Siparişler</h2>
+            <h2 className="text-sm font-semibold text-gray-700">{t("dashboard.recentOrders")}</h2>
             <Link href="/orders" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-              Tümünü Gör <ArrowRight className="h-3 w-3" />
+              {t("dashboard.viewAll")} <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
           {/* Mobil kart view */}
@@ -521,10 +524,10 @@ export default function DealerDashboard() {
               <Link key={order.id} href={`/orders/${order.id}`} className="flex items-center justify-between px-4 py-3 active:bg-gray-50 transition">
                 <div>
                   <p className="text-sm font-medium text-blue-600">{order.orderNumber}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString("tr-TR")}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString(dateLocale)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-900">{formatCurrency(Number(order.totalAmount))}</p>
+                  <p className="text-sm font-semibold text-gray-900">{formatCurrency(Number(order.totalAmount), currency)}</p>
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[order.status]}`}>
                     {statusLabels[order.status]}
                   </span>
@@ -537,19 +540,19 @@ export default function DealerDashboard() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="text-left px-6 py-2.5 text-xs font-medium text-gray-500 uppercase">
-                  Sipariş
+                  {t("orders.orderNo")}
                 </th>
                 <th className="text-left px-6 py-2.5 text-xs font-medium text-gray-500 uppercase">
-                  Tarih
+                  {t("orders.date")}
                 </th>
                 <th className="text-left px-6 py-2.5 text-xs font-medium text-gray-500 uppercase">
-                  Durum
+                  {t("orders.status")}
                 </th>
                 <th className="text-right px-6 py-2.5 text-xs font-medium text-gray-500 uppercase">
-                  Tutar
+                  {t("orders.amount")}
                 </th>
                 <th className="text-center px-6 py-2.5 text-xs font-medium text-gray-500 uppercase">
-                  PDF
+                  {t("common.pdf")}
                 </th>
               </tr>
             </thead>
@@ -565,7 +568,7 @@ export default function DealerDashboard() {
                     </Link>
                   </td>
                   <td className="px-6 py-3 text-sm text-gray-500">
-                    {new Date(order.createdAt).toLocaleDateString("tr-TR")}
+                    {new Date(order.createdAt).toLocaleDateString(dateLocale)}
                   </td>
                   <td className="px-6 py-3">
                     <span
@@ -575,14 +578,14 @@ export default function DealerDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-3 text-right text-sm font-medium text-gray-900">
-                    {formatCurrency(Number(order.totalAmount))}
+                    {formatCurrency(Number(order.totalAmount), currency)}
                   </td>
                   <td className="px-6 py-3 text-center">
                     <a
                       href={`/api/orders/${order.id}/proforma`}
                       target="_blank"
                       className="text-blue-600 hover:text-blue-800"
-                      title="Proforma İndir"
+                      title={t("dashboard.downloadProforma")}
                     >
                       <FileText className="h-4 w-4 inline" />
                     </a>
@@ -599,7 +602,7 @@ export default function DealerDashboard() {
         <div className="mt-6 bg-blue-50 rounded-xl border border-blue-100 p-5">
           <h2 className="text-sm font-semibold text-blue-700 mb-3 flex items-center gap-2">
             <Truck className="h-4 w-4" />
-            Kargodaki Siparişler
+            {t("dashboard.shippedOrders")}
           </h2>
           <div className="space-y-2">
             {orders

@@ -9,6 +9,8 @@ declare module "next-auth" {
       role: "ADMIN" | "DEALER";
       companyName: string;
       discountPercent: number | null;
+      language: "TR" | "EN";
+      currency: "TRY" | "USD";
     };
   }
 
@@ -17,6 +19,8 @@ declare module "next-auth" {
     role: "ADMIN" | "DEALER";
     companyName: string;
     discountPercent: number | null;
+    language: "TR" | "EN";
+    currency: "TRY" | "USD";
   }
 }
 
@@ -26,5 +30,7 @@ declare module "next-auth/jwt" {
     role: "ADMIN" | "DEALER";
     companyName: string;
     discountPercent: number | null;
+    language: "TR" | "EN";
+    currency: "TRY" | "USD";
   }
 }

@@ -19,6 +19,7 @@ export interface CartItem {
   wholesalePrice: number;
   quantity: number;
   isPreorder?: boolean;
+  currency?: "TRY" | "USD";
 }
 
 interface CartContextType {

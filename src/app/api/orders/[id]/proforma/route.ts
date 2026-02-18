@@ -43,7 +43,14 @@ export async function GET(
     );
   }
 
-  const pdfBuffer = await generateProformaPDF(order, order.dealer, settings, order.items);
+  const pdfBuffer = await generateProformaPDF(
+    order,
+    order.dealer,
+    settings,
+    order.items,
+    order.currency || "TRY",
+    order.dealer.language || "TR"
+  );
 
   return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {
